@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>/moonlight-test/</title>
+<meta charset="UTF-8">
+<script src="../butler.js"></script>
+<script src="main.js"></script>
+<script>
+var p = {
+	genChip : function(o={}){π.p(o,{typeS:"",nameInformalS:"",importEO:{},exportEO:{}});
+		return µ.m([".chip"+(num(o.typeS)<38?".old":"")+"[data-unique='"+o.typeS+"']",[
+			[".portC.import",Object.keys(o.importEO).map(s=>[".txt",s])],
+			[".unit",[
+				[".main",[
+					[".typeS","M"+o.typeS],
+					[".nameInformalS",o.nameInformalS],
+				]],
+			]],
+			[".portC.export",Object.keys(o.exportEO).map(s=>[".txt",s])],
+		]]);},
+};
+µ.onLoad(0,async ()=>{
+	µ.rr(document.body,µ.m([[
+		[".chipC"],
+	]]));
+	µ.maCSS(document.head,this.parent.selectorRootS,µ.cssCompile({
+		"*"                                                  : "box-sizing:border-box;",
+		":root"                                              : "¥s:1000‰;",
+		":root>body"                                         : "¥w:1000‰;¥h:1000‰;¥m:0px;¥ff:Monaco,monospace;¥fs:14px;¥bgc:hsla(280,100%,10%,1);¥oy:hidden;",
+		":root>body>.chipC"                                  : "¥:flex;flex-flow:column wrap;¥hmax:calc(1000‰ - "+(6*2)+"px);¥m:"+6+"px;",
+		":root>body>.chipC>.chip"                            : "¥:flex-row;justify-content:center;¥w:"+350+"px;¥m:"+6+"px;", //¥bo:1px solid red;
+		":root>body>.chipC>.chip>.portC"                     : "flex:1 1 0px;¥ox:hidden;¥oy:auto;¥:one-row;¥fs:10px;",
+		":root>body>.chipC>.chip>.portC>.txt"                : "¥c:hsla(0,0%,90%,1);",
+		":root>body>.chipC>.chip>.portC>.txt::before"        : "¥c:hsla(0,0%,40%,1);",
+		":root>body>.chipC>.chip>.unit"                      : "flex:0 0 100px;¥bo:0px solid hsla(0,0%,0%,1);display:flex;justify-content:center;align-items:center;¥bgc:hsla(0,0%,0%,1);¥brad:2px;¥bsw:0px 0px 0px 2px hsla(0,0%,50%,0.5);",
+		":root>body>.chipC>.chip.old>.unit"                  : "¥bgc:hsla(0,0%,20%,1);",
+		":root>body>.chipC>.chip>.unit>.main"                : "¥ta:center;¥p:2px;",
+		":root>body>.chipC>.chip>.unit>.main>.typeS"         : "¥fs:18px;¥fw:900;¥c:hsla(0,0%,100%,1);line-height:1.2em;",
+		":root>body>.chipC>.chip>.unit>.main>.nameInformalS" : "¥fs:9px;¥c:hsla(0,0%, 80%,1);line-height:1.2em;",
+		":root>body>.chipC>.chip>.import"                    : "",
+		":root>body>.chipC>.chip>.import>.txt"               : "¥ta:right;direction:rtl;",
+		":root>body>.chipC>.chip>.import>.txt::before"       : "content:'■■■ ';¥mr:-1px;letter-spacing:-0.23em;",
+		":root>body>.chipC>.chip>.export"                    : "",
+		":root>body>.chipC>.chip>.export>.txt"               : "¥ta:left;direction:ltr;",
+		":root>body>.chipC>.chip>.export>.txt::before"       : "content:'■■ ';¥ml:-1px;letter-spacing:-0.2em;",
+	}));
+	
+	await
+		[      "1", "2", "3", "4", "5", "6", "7", "8"
+		,     "11","12","13","14","15","16","17","18","19"
+		,"20","21","22","23","24","25","26","27","28","29"
+		,"30","31","32","33","34","35","36","37","38"
+		,"40","41","42","43","44","45","46","47","48"
+		,"50","51","52","53","54","55","56","57",     "59"
+		,"60","61","62","63","64","65","66"
+		// !!! HERE
+		].forEachAsyncOrdered(async typeS=>{
+		await µ.loadScript(typeS+".js");
+		if (typeof moonlight.bin[typeS] === US){lle("missing chip typeS:"+typeS);}
+		var instance = moonlight.bin[typeS]();
+		var statusF = µ.ma(µ.qd(".chipC"),p.genChip({typeS,nameInformalS:instance.nameInformalS,importEO:instance.importEO,exportEO:instance.exportEO}));
+	});
+});
+</script>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>lab-waveform</title>
+<meta charset="UTF-8">
+<script src="shelf/local/butler.js"></script>
+<script>Ω.mainDirectory = "./";</script>
+<script>
+p.pntFxn = function(elm,y){
+	var ctx = elm.getContext("2d");
+	for (var i = 0; i < 359; i++){
+		ctx.fillStyle = "hsla("+i+",100%,50%,0.1)";
+		ctx.fillRect(i+0.1,i+y+0.1,100,100);}
+};
+var sleep = function(dltT){return new Promise(resolveFxn=>setTimeout(resolveFxn,dltT*1000));};
+var expand = 4;
+var steptotal = 30 * 60;//10 * 100;
+µ.onLoad(0,async ()=>{
+	µ.qd(":root>body>input").addEventListener("input",async function(){
+		var fleR = this.files[0];
+		ll(fleR);
+		
+		var cvs = µ.qd(":root>body>canvas");
+		cvs.width  = cvs.clientWidth  * Ω.pxd ;
+		cvs.height = cvs.clientHeight * Ω.pxd ;
+		
+		const audioCtx = new AudioContext();
+		
+		//Create audio source
+		//Here, we use an audio file, but this could also be e.g. microphone input
+		const audioEle = new Audio();
+		audioEle.src = URL.createObjectURL(fleR);//insert file name here
+		audioEle.autoplay = true;
+		audioEle.preload = "auto";
+		const audioSourceNode = audioCtx.createMediaElementSource(audioEle);
+		
+		//Create analyser node
+		const analyserNode = audioCtx.createAnalyser();
+		// n5 to n15, doubly inclusive
+		analyserNode.fftSize = Math.pow(2,12); //Math.pow(2,12) // 44100 / 60, roud up to nearest power of two
+		const bufferLength = analyserNode.frequencyBinCount;
+		const dataArray = new Float32Array(bufferLength);
+		
+		var biquadFilter = audioCtx.createBiquadFilter();
+		var convolver = audioCtx.createConvolver();
+		
+		//Set up audio node network
+		audioSourceNode.connect(analyserNode);
+		//biquadFilter.connect(analyserNode);
+		analyserNode.connect(audioCtx.destination);
+		
+		biquadFilter.type = "bandpass";
+		biquadFilter.frequency.setValueAtTime(1000, 0);
+		biquadFilter.Q.setValueAtTime(10, 0);
+		
+		//Create 2D canvas
+		const canvas = cvs;
+		canvas.height = (steptotal * expand);
+		canvas.style.height = ((steptotal * expand) / Ω.pxd) + "px";
+		const canvasCtx = canvas.getContext('2d');
+		canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		analyserNode.smoothingTimeConstant = 0;
+		
+		function draw() {
+			//Schedule next redraw
+			requestAnimationFrame(draw);
+			
+			//Get spectrum data
+			analyserNode.getFloatFrequencyData(dataArray);
+			
+			var a = Array.from(dataArray);
+			var amax = a.max();
+			var amin = a.min();
+			//
+			//dbg = a;
+			
+			// !!! Try line-of-best-fit noise filtering.
+			//     With the naive amax amin, a loud left hand will mask a quiet right hand (piano).
+			//     Also, copy the volume smoother from [82.js] instead of a raw amax amin.
+			//     Calculate the entire file up front. (for the volume smoother | also in preparation for image output)
+			
+			var s = 1.25;
+			
+			var smax = Math.pow(s,amax);
+			var smin = Math.pow(s,amin);
+			
+			//Draw black background
+			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+			
+			//Draw spectrum
+			var xmax = Math.log(bufferLength) / Math.log(2);
+			const barWidth = (canvas.width / bufferLength) * 4 * Ω.pxd;
+			for (let i = 0; i < bufferLength; i++) {
+				var d = dataArray[i];
+				var f = i * (audioCtx.sampleRate / analyserNode.frequencyBinCount);
+				if (F){;}
+				else if (    0 <= f && f <    16){canvasCtx.fillStyle = "hsla("+(( 0/12)*360)+",100%,50%,1)";}
+				else if (   16 <= f && f <    32){canvasCtx.fillStyle = "hsla("+(( 1/12)*360)+",100%,50%,1)";}
+				else if (   32 <= f && f <    64){canvasCtx.fillStyle = "hsla("+(( 2/12)*360)+",100%,50%,1)";}
+				else if (   64 <= f && f <   128){canvasCtx.fillStyle = "hsla("+(( 3/12)*360)+",100%,50%,1)";}
+				else if (  128 <= f && f <   256){canvasCtx.fillStyle = "hsla("+(( 4/12)*360)+",100%,50%,1)";}
+				else if (  256 <= f && f <   512){canvasCtx.fillStyle = "hsla("+(( 5/12)*360)+",100%,50%,1)";}
+				else if (  512 <= f && f <  1024){canvasCtx.fillStyle = "hsla("+(( 6/12)*360)+",100%,50%,1)";}
+				else if ( 1024 <= f && f <  2048){canvasCtx.fillStyle = "hsla("+(( 7/12)*360)+",100%,50%,1)";}
+				else if ( 2048 <= f && f <  4096){canvasCtx.fillStyle = "hsla("+(( 8/12)*360)+",100%,50%,1)";}
+				else if ( 4096 <= f && f <  8192){canvasCtx.fillStyle = "hsla("+(( 9/12)*360)+",100%,50%,1)";}
+				else if ( 8192 <= f && f < 16384){canvasCtx.fillStyle = "hsla("+((10/12)*360)+",100%,50%,1)";}
+				else if (16384 <= f && f < 32768){canvasCtx.fillStyle = "hsla("+((11/12)*360)+",100%,50%,1)";}
+				//var val = ((d - min) / (max - min));
+				//val = Math.pow(val,6);
+				//const barHeight = val * canvas.height;
+				
+				var sval = Math.pow(s,d);
+				const barHeight = ((sval - smin) / (smax - smin)) * canvas.height;
+				
+				var _ = Math.log(i) / Math.log(2);
+				var x = ((_ - 0) / (xmax - 0)) * canvas.width;
+				
+				canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+				;}
+			;};
+		
+		//draw();
+		
+		function paint(){
+			
+			//Draw black background
+			canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+			canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+			
+			for (var n = 0; n < steptotal; n++){
+				var t = n / 100;
+				audioEle.currentTime = t;
+				printline(n);
+				;}
+			;}
+		
+		function printline(n){ll(canvas.height - n);
+			//Get spectrum data
+			analyserNode.getFloatFrequencyData(dataArray);
+			
+			var a = Array.from(dataArray);
+			var amax = a.max();
+			var amin = a.min();
+			//
+			//dbg = a;
+			
+			// !!! Try line-of-best-fit noise filtering.
+			//     With the naive amax amin, a loud left hand will mask a quiet right hand (piano).
+			//     Also, copy the volume smoother from [82.js] instead of a raw amax amin.
+			//     Calculate the entire file up front. (for the volume smoother | also in preparation for image output)
+			
+			var s = 1.25;
+			
+			var smax = Math.pow(s,amax);
+			var smin = Math.pow(s,amin);
+			
+			//Draw spectrum
+			var xmax = Math.log(bufferLength) / Math.log(2);
+			const barWidth = (canvas.width / bufferLength) * 4 * Ω.pxd;
+			for (let i = 0; i < bufferLength; i++) {
+				var d = dataArray[i];
+				var f = i * (audioCtx.sampleRate / analyserNode.frequencyBinCount);
+				
+				//var val = ((d - min) / (max - min));
+				//val = Math.pow(val,6);
+				//const barHeight = val * canvas.height;
+				
+				var sval = Math.pow(s,d);
+				var prt = (sval - smin) / (smax - smin);
+				
+				var _ = Math.log(i) / Math.log(2);
+				var x = ((_ - 0) / (xmax - 0)) * canvas.width;
+				
+				if (n===0 && i < 100){llw(prt);}
+				if (F){;}
+				else if (    0 <= f && f <    16){canvasCtx.fillStyle = "hsla("+(( 0/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (   16 <= f && f <    32){canvasCtx.fillStyle = "hsla("+(( 1/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (   32 <= f && f <    64){canvasCtx.fillStyle = "hsla("+(( 2/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (   64 <= f && f <   128){canvasCtx.fillStyle = "hsla("+(( 3/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (  128 <= f && f <   256){canvasCtx.fillStyle = "hsla("+(( 4/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (  256 <= f && f <   512){canvasCtx.fillStyle = "hsla("+(( 5/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (  512 <= f && f <  1024){canvasCtx.fillStyle = "hsla("+(( 6/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 1024 <= f && f <  2048){canvasCtx.fillStyle = "hsla("+(( 7/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 2048 <= f && f <  4096){canvasCtx.fillStyle = "hsla("+(( 8/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 4096 <= f && f <  8192){canvasCtx.fillStyle = "hsla("+(( 9/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 8192 <= f && f < 16384){canvasCtx.fillStyle = "hsla("+((10/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (16384 <= f && f < 32768){canvasCtx.fillStyle = "hsla("+((11/12)*360)+",100%,50%,"+str(prt)+")";}
+				
+				canvasCtx.fillRect(x, canvas.height - n, barWidth, 1);
+				;}
+			;}
+		
+		var nnn = 0;
+		function printliner(){
+			
+			//Schedule next redraw
+			requestAnimationFrame(printliner);
+			
+			//Get spectrum data
+			analyserNode.getFloatFrequencyData(dataArray);
+			
+			var a = Array.from(dataArray);
+			var amax = a.max();
+			var amin = a.min();
+			//
+			//dbg = a;
+			
+			// !!! Try line-of-best-fit noise filtering.
+			//     With the naive amax amin, a loud left hand will mask a quiet right hand (piano).
+			//     Also, copy the volume smoother from [82.js] instead of a raw amax amin.
+			//     Calculate the entire file up front. (for the volume smoother | also in preparation for image output)
+			
+			var s = 1.25;
+			
+			var smax = Math.pow(s,amax);
+			var smin = Math.pow(s,amin);
+			
+			//Draw spectrum
+			var xmin = 0.25 * Math.log(bufferLength) / Math.log(2);
+			var xmax = 1.5 * Math.log(bufferLength) / Math.log(2);
+			const barWidth = (canvas.width / bufferLength) * 6 * Ω.pxd;
+			for (let i = 0; i < bufferLength; i++){
+				var d = dataArray[i];
+				var f = i * (audioCtx.sampleRate / analyserNode.frequencyBinCount);
+				
+				//var val = ((d - min) / (max - min));
+				//val = Math.pow(val,6);
+				//const barHeight = val * canvas.height;
+				
+				var sval = Math.pow(s,d);
+				var prt = (sval - smin) / (smax - smin);//if (prt > 1){prt = 1;}
+				prt = Math.pow(prt,2);
+				
+				var _ = Math.log(f) / Math.log(2);
+				var x = ((_ - xmin) / (xmax - xmin)) * canvas.width;
+				
+				if (F){;}
+				else if (    0 <= f && f <    16){canvasCtx.fillStyle = "hsla("+(( 0/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (   16 <= f && f <    32){canvasCtx.fillStyle = "hsla("+(( 1/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (   32 <= f && f <    64){canvasCtx.fillStyle = "hsla("+(( 2/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (   64 <= f && f <   128){canvasCtx.fillStyle = "hsla("+(( 3/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (  128 <= f && f <   256){canvasCtx.fillStyle = "hsla("+(( 4/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (  256 <= f && f <   512){canvasCtx.fillStyle = "hsla("+(( 5/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (  512 <= f && f <  1024){canvasCtx.fillStyle = "hsla("+(( 6/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 1024 <= f && f <  2048){canvasCtx.fillStyle = "hsla("+(( 7/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 2048 <= f && f <  4096){canvasCtx.fillStyle = "hsla("+(( 8/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 4096 <= f && f <  8192){canvasCtx.fillStyle = "hsla("+(( 9/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if ( 8192 <= f && f < 16384){canvasCtx.fillStyle = "hsla("+((10/12)*360)+",100%,50%,"+str(prt)+")";}
+				else if (16384 <= f && f < 32768){canvasCtx.fillStyle = "hsla("+((11/12)*360)+",100%,50%,"+str(prt)+")";}
+				
+				if (nnn*expand >= 24){
+					canvasCtx.fillRect(x, nnn*expand, barWidth, 1*expand);}
+				;}
+			nnn++;
+			;}
+		
+		//audioEle.playbackRate = 0.1;
+		//audioEle.play();
+		//await sleep(2);
+		//audioEle.pause();
+		//await sleep(1);
+		canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+		canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+		var xmin = 0.25 * Math.log(bufferLength) / Math.log(2);
+		var xmax = 1.5 * Math.log(bufferLength) / Math.log(2);
+		for (var n = 1; n <= 88; n++){
+			var hz = Math.pow(2,((n - 49) / 12)) * 440;
+			ll(hz);
+			var _ = Math.log(hz) / Math.log(2);
+			var x = ((_ - xmin) / (xmax - xmin)) * canvas.width;
+			// [https://en.wikipedia.org/wiki/Piano_key_frequencies]
+			if (n%12 === 4){canvasCtx.fillStyle = "hsla(0,100%,50%,1)";}
+			else           {canvasCtx.fillStyle = "hsla(0,0%,"+((([1,3,4,6,8,9,11].includes(n%12)===T)?(1):(0.25))*100)+"%,1)";}
+			canvasCtx.fillRect(x, 4, 12, 12);
+			;}
+		//audioEle.playbackRate = 0.5;
+		printliner();
+		
+		;});
+});
+</script>
+<style>
+html {width:100%;height:100%;}
+body {width:100%;height:100%;margin:0px;}
+canvas {width:100%;height:600px;border:1px solid pink;}
+</style>
+</head>
+<body>
+<input type="file"><br>
+<canvas></canvas>
+</body>
+</html>

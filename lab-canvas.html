@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>lab-canvas</title>
+<meta charset="UTF-8">
+<script src="shelf/local/butler.js"></script>
+<script>Ω.mainDirectory = "./";</script>
+<script>
+p.pntFxn = function(elm,y){
+	var ctx = elm.getContext("2d");
+	for (var i = 0; i < 359; i++){
+		ctx.fillStyle = "hsla("+i+",100%,50%,0.1)";
+		ctx.fillRect(i+0.1,i+y+0.1,100,100);}
+};
+// !!! Test GPU compositing vs. manual compositing.
+µ.onLoad(0,async ()=>{
+	switch (1){default : {;}
+		// Individual canvases.
+		break;case 0 : {
+			p.a = U;
+			p.b = new Array(10).map(elm=>µ.m(["canvas"]));
+			p.b.forEach(elm=>{
+				document.body.appendChild(elm);
+				elm.width  = 1200 ;
+				elm.height = 1200 ;});
+			p.cycFxn = function(){
+				p.b.forEach((elm,i)=>{
+					elm.getContext("2d").clearRect(0,0,1200,1200);
+					p.pntFxn(elm,i*20);});
+				window.requestAnimationFrame(p.cycFxn.bind(p));};
+			window.requestAnimationFrame(p.cycFxn.bind(p));}
+		// One canvas.
+		break;case 1 : {
+			p.a = µ.m(["canvas"]);
+			p.b = U;
+			document.body.appendChild(p.a);
+			p.a.width  = 1200 ;
+			p.a.height = 1200 ;
+			p.cycFxn = function(){
+				p.a.getContext("2d").clearRect(0,0,1200,1200);
+				p.pntFxn(p.a,  0);
+				p.pntFxn(p.a, 20);
+				p.pntFxn(p.a, 40);
+				p.pntFxn(p.a, 60);
+				p.pntFxn(p.a, 80);
+				p.pntFxn(p.a,100);
+				p.pntFxn(p.a,120);
+				p.pntFxn(p.a,140);
+				p.pntFxn(p.a,160);
+				p.pntFxn(p.a,180);
+				window.requestAnimationFrame(p.cycFxn.bind(p));};
+			window.requestAnimationFrame(p.cycFxn.bind(p));}
+		// Individual virtual canvases draw to one canvas.
+		break;case 2 : {
+			p.a = µ.m(["canvas"]);
+			document.body.appendChild(p.a);
+			p.a.width  = 1200 ;
+			p.a.height = 1200 ;
+			p.b = new Array(10).map(elm=>µ.m(["canvas"]));
+			p.b.forEach(elm=>{
+				elm.width  = 1200 ;
+				elm.height = 1200 ;});
+			p.cycFxn = function(){
+				p.b.forEach((elm,i)=>{
+					elm.getContext("2d").clearRect(0,0,1200,1200);
+					p.pntFxn(elm,i*20);});
+				p.b.forEach(elm=>{
+					p.a.getContext("2d").drawImage(elm,0,0,1200,1200,0,0,1200,1200);});
+				window.requestAnimationFrame(p.cycFxn.bind(p));};
+			window.requestAnimationFrame(p.cycFxn.bind(p));}
+		;}
+});
+</script>
+<style>
+html {width:100%;height:100%;}
+body {width:100%;height:100%;margin:0px;}
+canvas {position:absolute;top:0px;left:0px;width:600px;height:600px;border:1px solid pink;}
+</style>
+</head>
+<body></body>
+</html>

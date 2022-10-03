@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>GitHub Semi-Sigma</title>
+<meta charset="UTF-8">
+<style>
+* {box-sizing:border-box;font-family:Verdana;}
+input {display:block;width:85%;border:1px solid black;border-radius:3px;}
+._vis-hgh {visibility:visible;}
+._vis-low {visibility:hidden ;}
+table {border-collapse:collapse;}
+:root>body>.a {border-left:3px solid black;border-right:3px solid black;}
+:root>body>.d {border-bottom:3px solid black;}
+:root>body>.b {border-bottom:3px solid black;}
+:root>body>.a,
+:root>body>.b,
+:root>body>.c,
+:root>body>.d,
+:root>body>.e {padding:12px;overflow:auto;}
+:root>body>.d {position:absolute;top   :0px;left :0px;width:25%;height: 50%;}
+:root>body>.e {position:absolute;bottom:0px;left :0px;width:25%;height: 50%;}
+:root>body>.a {position:absolute;top   :0px;left :25%;width:50%;height:100%;}
+:root>body>.b {position:absolute;top   :0px;right:0px;width:25%;height: 33%;}
+:root>body>.c {position:absolute;bottom:0px;right:0px;width:25%;height: 67%;}
+:root>body>.a>table>tbody>tr:nth-child(1)     {border-top:1px solid black;}
+:root>body>.a>table>tbody>tr                  {border-bottom:1px solid black;}
+:root>body>.a>table>tbody>tr:nth-child(2n)    {background-color:hsla(0,0%,90%,1);}
+:root>body>.a>table>tbody>tr  >td:nth-child(1){border-left:1px solid hsla(0,0%,80%,1);}
+:root>body>.a>table>tbody>tr  >td             {border-right:1px solid hsla(0,0%,80%,1);}
+:root>body>.a>table>tbody>tr.a>td.b>button    {}
+:root>body>.a>table>tbody>tr.a>td.c>button    {}
+:root>body>.a>table>tbody>tr.a>td.d>button    {}
+:root>body>.a>table>tbody>tr.a>td.e           {}
+:root>body>.a>table>tbody>tr.a>td.f           {}
+:root>body>.a>table>tbody>tr.a>td.a           {}
+:root>body>.b>.a,
+:root>body>.b>.b        {padding-left:24px;}
+:root>body>.b>.a>.a.hgh {color:hsla(0,0%, 0%,1);}
+:root>body>.b>.a>.a.low {color:hsla(0,0%,85%,1);}
+:root>body>.e.hgh {background-color:hsla(0,0%, 50%,1);}
+:root>body>.e.low {background-color:hsla(0,0%,100%,1);}
+:root>body>*>.ttl {width:100%;font-size:150%;font-weight:bold;border-bottom:1px dashed black;}
+</style>
+<script src="../../shelf/local/butler.js"></script>
+<script src="../../shelf/local/sigma.js"></script>
+<script>Ω.mainDirectory = "./";</script>
+<script>
+
+// [https://docs.github.com/en/rest/reference/repos]
+
+var p = {
+	usrNmeS : U  ,
+	tknS    : U  ,
+	crtEA   : [] ,
+};
+
+// Progress jobs tracker.
+p.c = 0;
+p.inc = async function(){
+	p.c++;
+	this.incdecDisplay();};
+p.dec = async function(){
+	p.c--;
+	this.incdecDisplay();};
+p.incdecDisplay = async function(){
+	if (p.c > 0){µ.qd(":root>body>.e").classList.remove("low");µ.qd(":root>body>.e").classList.add("hgh");µ.qd(":root>body>.e").textContent = "Working on "+str(p.c)+" "+((p.c===1)?("task"):("tasks"))+".";}
+	else        {µ.qd(":root>body>.e").classList.remove("hgh");µ.qd(":root>body>.e").classList.add("low");µ.qd(":root>body>.e").textContent = "";}};
+
+p.request = async function(mtdS,urlS,datM){
+	return new Promise(async resolveFxn=>{
+		var xhr = new XMLHttpRequest();
+		xhr.timeout = 60 * 1000;
+		xhr.addEventListener("abort",(function(resolveFxn){return function(){resolveFxn(U);};})(resolveFxn));
+		xhr.addEventListener("error",(function(resolveFxn){return function(){resolveFxn(U);};})(resolveFxn));
+		xhr.addEventListener("load" ,(function(resolveFxn){return function(){
+			resolveFxn({responseText:this.responseText,responseJson:JSON.parse(this.responseText)});};})(resolveFxn));
+		xhr.open(mtdS,urlS,T);
+		xhr.setRequestHeader("Authorization","token "+p.tknS);
+		if (datM === U){xhr.send(                    );}
+		else           {xhr.send(JSON.stringify(datM));}
+		return;});};
+
+p.sleep = function(dltT){return new Promise(resolveFxn=>setTimeout(resolveFxn,dltT*1000));};
+
+// DIRTY
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = () => resolve(btoa(reader.result));
+    reader.onerror = error => reject(error);
+});
+//await toBase64(file)
+
+p.genMetadataPath = function(rpoNmeS){
+	return "raw.githubusercontent.com/"+p.usrNmeS+"/"+rpoNmeS+"/main/metadata.txt";};
+
+//------------------------------------------------------------------------------------------------------------------------
+
+// Assist.
+
+p.getRepoNameList = async function(){
+	// !!! Throttled to 100 rows per request. Can't test 100+ handling easily right now.
+	// !!! How does this act on a fresh account with no repos? Same 404 bullshit?
+	var o = await p.request("GET","https://api.github.com/users/"+p.usrNmeS+"/repos",U);
+	if (o === U){o = {responseJson:[]};} // !!! [Assumption until tested.] Failure overloaded as possible empty, copied from [[[getFileEntityList]]].
+	if (isA(o.responseJson) === F){o.responseJson = [];}
+	return o.responseJson.map(rpoE=>rpoE.name);};
+
+p.getFile = async function(rpoNmeS,fleNmeS){
+	var o = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents/"+fleNmeS,U);
+	if (o === U){return U;}
+	if (o.responseJson.content === U){return U;}
+	return atob(o.responseJson.content);};
+
+p.getEntityList = async function(rpoNmeS){
+	var o = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents",U);
+	if (o === U){o = {responseJson:[]};} // Failure overloaded as possible empty thanks to misguided GitHub API devs.
+	if (isA(o.responseJson) === F){o.responseJson = [];}
+	return o.responseJson;};
+
+p.getFileEntityList = async function(rpoNmeS){
+	var o = await p.getEntityList(rpoNmeS);
+	if (o === U){return U;}
+	return o.filter(fleE=>fleE.type==="file");};
+
+p.getFileNameList = async function(rpoNmeS){
+	var o = await p.getFileEntityList(rpoNmeS);
+	if (o === U){return U;}
+	return o.map(fleE=>fleE.name);};
+
+//........................................................................................................................
+
+// Actions.
+
+p.login = async function(usrNmeS,tknS){
+	p.usrNmeS = usrNmeS;
+	p.tknS = tknS;
+	await p.printRepoList();
+	return T;};
+
+p.printRepoList = async function(){
+	var rpoNmeSA = await p.getRepoNameList();
+	
+	var o = await p.getFile("ftb9-semi-sigma","user.txt");
+	var oo = U;
+	if (o !== U){
+		o = JSON.parse(o);
+		if (isA(o["chart-collection"]) !== F){
+			oo = o["chart-collection"];}}
+	ll(oo);
+	
+	µ.rr(µ.qd(":root>body>.a"),µ.m([[
+		[".ttl","Your GitHub Repos"],
+		["","\n"],
+	].concat(
+		[["table",[
+			["tbody",rpoNmeSA.map(rpoNmeS=>{
+				return ["tr.a",[
+					["td.a",rpoNmeS],
+					["td.b",[
+						["button",{click:(function(rpoNmeS){return async function(){
+							await p.inc();
+							await p.printRepo(rpoNmeS);
+							await p.dec();};})(rpoNmeS)},"view/edit"]
+					]],
+					["td.f",((rpoNmeS==="ftb9-semi-sigma")?("[profile]"):(""))],
+					["td.e",((oo.includes(p.genMetadataPath(rpoNmeS)))?("[linked]"):(""))],
+					["td.c",[
+						["button",{click:(function(rpoNmeS){return async function(){
+							await p.inc();
+							p.linkRepo(rpoNmeS);
+							await p.dec();};})(rpoNmeS)},"link"]
+					]],
+					["td.d",[
+						["button",{click:(function(rpoNmeS){return async function(){
+							await p.inc();
+							p.unlinkRepo(rpoNmeS);
+							await p.dec();};})(rpoNmeS)},"unlink"]
+					]],
+				]];})
+			],
+		]]]
+	).concat([
+		["","\n"],
+		["","\n"],
+		["","\n"],
+		[".ttl","Create New Chart"],
+		["","\n"],
+		["","repo name"],
+		["input.c"],
+		["","\n"],
+		["button.b",{click:async function(){
+			await p.inc();
+			await p.assertRepo(µ.ql(this,"input.c").value);
+			await p.dec();}},"create new repo"],
+		["","\n"],
+		["","\n"],
+		["","\n"],
+		[".ttl","Delete Chart / Delete A File"],
+		["","\n"],
+		["","You'll have to do this yourself."],
+		["","It's too dangerous for us to reasonably handle on your half."],
+		["a",{d:{href:"https://github.com/"+p.usrNmeS+"?tab=repositories"}},"https://github.com/"+p.usrNmeS+"?tab=repositories"],
+		["","\n"],
+		["","\n"],
+		["","\n"],
+		[".ttl","Registration"],
+		["","\n"],
+		["","Your FtB9 profile URL is the following."],
+		["a",{d:{href:"https://raw.githubusercontent.com/"+p.usrNmeS+"/ftb9-semi-sigma/main/user.txt"}},"https://raw.githubusercontent.com/"+p.usrNmeS+"/ftb9-semi-sigma/main/user.txt"],
+	])]));
+	return T;};
+
+p.linkRepo = async function(rpoNmeS){
+	var o = await p.assertRepo("ftb9-semi-sigma");
+	if (o === U){return U;}
+	var fleNmeS = "user.txt";
+	
+	var o = await p.getFile("ftb9-semi-sigma",fleNmeS);
+	if (o === U){;}
+	else        {o = JSON.parse(o);}
+	if (o                          === U){o                     = {}        ;}
+	if (isO(o)                     === F){o                     = {}        ;}
+	if (isS(o["name"])             === F){o["name"]             = p.usrNmeS ;}
+	if (isA(o["chart-collection"]) === F){o["chart-collection"] = []        ;}
+	
+	o["chart-collection"].pushUnique(p.genMetadataPath(rpoNmeS));
+	var o = await p.assertFile("ftb9-semi-sigma",fleNmeS,btoa(JSON.stringify(o)));
+	if (o === U){return U;}
+	await p.printRepoList();
+	return T;};
+
+p.unlinkRepo = async function(rpoNmeS){
+	var o = await p.assertRepo("ftb9-semi-sigma");
+	if (o === U){return U;}
+	var fleNmeS = "user.txt";
+	
+	var o = await p.getFile("ftb9-semi-sigma",fleNmeS);
+	if (o === U){;}
+	else        {o = JSON.parse(o);}
+	if (o                          === U){o                     = {}        ;}
+	if (isO(o)                     === F){o                     = {}        ;}
+	if (isS(o["name"])             === F){o["name"]             = p.usrNmeS ;}
+	if (isA(o["chart-collection"]) === F){o["chart-collection"] = []        ;}
+	
+	o["chart-collection"].removeValueFirst(p.genMetadataPath(rpoNmeS));
+	var o = await p.assertFile("ftb9-semi-sigma",fleNmeS,btoa(JSON.stringify(o)));
+	if (o === U){return U;}
+	await p.printRepoList();
+	return T;};
+
+p.printRepo = async function(rpoNmeS){
+	µ.qd(":root>body>.c>.g").value = rpoNmeS;
+	µ.qd(":root>body>.c>.e").value = ""; // Until overwritten on success later.
+	µ.qd(":root>body>.c>.f").value = ""; // Until overwritten on success later.
+	var fleEA = await p.getEntityList(rpoNmeS);
+	µ.rr(µ.qd(":root>body>.b"),µ.m([
+		[
+			[".ttl","Repo Files"],
+			["","\n"],
+			["","Repo:"],
+			[".b",rpoNmeS],
+			["","\n"],
+			["","URL:"],
+			["a.c",{d:{href:"https://github.com/"+p.usrNmeS+"/"+rpoNmeS}},"https://github.com/"+p.usrNmeS+"/"+rpoNmeS],
+			["","\n"],
+			["","Files:"],
+		]
+	.concat(
+		fleEA.map(fleE=>{
+		return [".a",[
+			[".a"+(fleE.type==="file"&&fleE.name[0]!=="."?".hgh":".low"),fleE.name+(fleE.type==="file"?"":"/")],]];}))
+		]));
+	
+	var o = await σ.get({urlS:"https://raw.githubusercontent.com/"+p.usrNmeS+"/"+rpoNmeS+"/main/metadata.txt",typS:"chart"});
+	if (o.staF === F){return U;}
+	µ.qd(":root>body>.c>.e").value = o.datAltM.ttlS;
+	µ.qd(":root>body>.c>.f").value = o.datAltM.oriS;
+	return T;};
+
+p.assertRepo = async function(rpoNmeS){
+	var rpoNmeSA = await p.getRepoNameList();
+	if (rpoNmeSA.includes(rpoNmeS) === T){
+		return T;}
+	var o = await p.request("POST","https://api.github.com/user/repos",
+		{
+			"name"      : rpoNmeS ,
+			"auto_init" : F       ,
+			"private"   : F       ,});
+	if (o === U){return U;}
+	// Wait for changes to be reflected, but give up if too much time passes.
+	var lopT_0 = π.clcCurT() ;
+	var lopT_1 = U           ;
+	for (var lopN = 0;; lopN++){
+		var rpoNmeSA = await p.getRepoNameList();
+		if (rpoNmeSA.includes(rpoNmeS) === F){
+			lopT_1 = π.clcCurT();
+			if (lopT_1 - lopT_0 >= 10){return U;}
+			await p.sleep(0.1);
+			continue;}
+		break;}
+	return T;};
+
+p.assertFile = async function(rpoNmeS,fleNmeS,datS){
+	var shaS;{
+		var fleEA = await p.getFileEntityList(rpoNmeS);
+		var fleE = fleEA.find(fleE=>fleE.name===fleNmeS);
+		shaS = ((fleE!==U)?(fleE.sha):(U));}
+	var o = await p.request("PUT","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents/"+fleNmeS,
+		{
+			"message" : "[FtB9 Semi-Sigma Action]",
+			"content" : datS,
+			"sha"     : shaS,});
+	if (o === U){return U;}
+	if (shaS !== U){
+		// Wait for changes to be reflected, but give up if too much time passes.
+		var lopT_0 = π.clcCurT() ;
+		var lopT_1 = U           ;
+		for (var lopN = 0;; lopN++){
+			var fleNmeSA = await p.getFileNameList(rpoNmeS);
+			if (fleNmeSA.includes(fleNmeS) === F){
+				lopT_1 = π.clcCurT();
+				if (lopT_1 - lopT_0 >= 10){return U;}
+				await p.sleep(0.1);
+				continue;}
+			break;}}
+	return T;};
+
+
+
+//------------------------------------------------------------------------------------------------------------------------
+
+
+
+µ.onLoad(0,async ()=>{
+	
+	µ.rr(µ.qd(":root>body"),µ.m([[
+		[".d",[
+			[".ttl","Account"],
+			["","\n"],
+			["","GitHub Username"],
+			["a",{d:{style:"display:block;",href:"https://github.com/login"}},"https://github.com/login"],
+			["a",{d:{style:"display:block;",href:"https://github.com/join"}},"https://github.com/join"],
+			["input.a",{d:{value:""}}], // !!! PRIVATE (if you fill it in during debugging)
+			["","\n"],
+			["","GitHub Personal Access Token (public_repo)"],
+			["a",{d:{style:"display:block;",href:"https://github.com/settings/tokens"}},"https://github.com/settings/tokens"],
+			["input.b",{d:{type:"password",value:""}}], // !!! PRIVATE (if you fill it in during debugging)
+			["","\n"],
+			["button.c","use this GitHub account"],
+		]],
+		[".a"],
+		[".b"],
+		[".c",[
+			[".ttl","Upload"],
+			["","\n"],
+			["","repo name (existing repo)"],
+			["input.g"],
+			["","\n"],
+			["","title"],
+			["input.e"],
+			["button.e-btn","overwrite title"],
+			["","\n"],
+			["","origin"],
+			["input.f"],
+			["button.f-btn","overwrite origin"],
+			["","\n"],
+			["","icon file"],
+			["input.b",{d:{type:"file",placeholder:"icon"}}],
+			["button.b-btn","overwrite icon"],
+			["","\n"],
+			["","audio file"],
+			["input.c",{d:{type:"file",placeholder:"audio"}}],
+			["button.c-btn","overwrite audio"],
+			["","\n"],
+			["","notes file"],
+			["input.d",{d:{type:"file",placeholder:"chart"}}],
+			["button.d-btn","overwrite notes"],
+			["","\n"],
+			["button.a-btn","overwrite all fields"],
+		]],
+		[".e"],
+	]]));
+	
+	µ.qd(":root>body>.d>.c").addEventListener("click",async function(){
+		await p.inc();
+		var wrpElm = µ.qu(this,"*");
+		await p.login(µ.qd(wrpElm,".a").value,µ.qd(wrpElm,".b").value);
+		await p.dec();});
+	
+	p.upl = async function(wchS){
+		
+		var wrpElm = µ.qd(":root>body>.c");
+		
+		// Convenience.
+		if (µ.qd(wrpElm,".g").value.length === 0){return U;}
+		
+		var o = await p.getFile(µ.qd(wrpElm,".g").value,"metadata.txt");
+		if (o === U){;}
+		else        {o = JSON.parse(o);}
+		if (o      === U){o = {};}
+		if (isO(o) === F){o = {};}
+		
+		if (wchS === ".e" || wchS === "*"){
+			o["title" ] = µ.qd(wrpElm,".e").value;}
+		if (wchS === ".f" || wchS === "*"){
+			o["origin"] = µ.qd(wrpElm,".f").value;}
+		if ((wchS === ".b" || wchS === "*") && (µ.qd(wrpElm,".b").files.length === 1)){
+			o["icon"  ] = "./"+µ.qd(wrpElm,".b").files[0].name;
+			await p.assertFile(µ.qd(wrpElm,".g").value,µ.qd(wrpElm,".b").files[0].name,await toBase64(µ.qd(wrpElm,".b").files[0]));}
+		if ((wchS === ".c" || wchS === "*") && (µ.qd(wrpElm,".c").files.length === 1)){
+			o["audio" ] = "./"+µ.qd(wrpElm,".c").files[0].name;
+			await p.assertFile(µ.qd(wrpElm,".g").value,µ.qd(wrpElm,".c").files[0].name,await toBase64(µ.qd(wrpElm,".c").files[0]));}
+		if ((wchS === ".d" || wchS === "*") && (µ.qd(wrpElm,".d").files.length === 1)){
+			o["chart" ] = "./"+µ.qd(wrpElm,".d").files[0].name;
+			await p.assertFile(µ.qd(wrpElm,".g").value,µ.qd(wrpElm,".d").files[0].name,await toBase64(µ.qd(wrpElm,".d").files[0]));}
+		var o = await p.assertFile(µ.qd(wrpElm,".g").value,"metadata.txt",btoa(JSON.stringify(o)));
+		if (o === U){return U;}
+		
+		return T;};
+	
+	µ.qd(":root>body>.c>.e-btn").addEventListener("click",async function(){await p.inc();await p.upl(".e");await p.dec();});
+	µ.qd(":root>body>.c>.f-btn").addEventListener("click",async function(){await p.inc();await p.upl(".f");await p.dec();});
+	µ.qd(":root>body>.c>.b-btn").addEventListener("click",async function(){await p.inc();await p.upl(".b");await p.dec();});
+	µ.qd(":root>body>.c>.c-btn").addEventListener("click",async function(){await p.inc();await p.upl(".c");await p.dec();});
+	µ.qd(":root>body>.c>.d-btn").addEventListener("click",async function(){await p.inc();await p.upl(".d");await p.dec();});
+	µ.qd(":root>body>.c>.a-btn").addEventListener("click",async function(){await p.inc();await p.upl("*" );await p.dec();});
+});
+</script>
+<style>
+html {width:100%;height:100%;}
+body {width:100%;height:100%;margin:0px;}
+</style>
+</head>
+<body></body>
+</html>

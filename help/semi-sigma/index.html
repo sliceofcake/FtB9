@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>GitHub Semi-Sigma</title>
+<meta charset="UTF-8">
+<style>
+
+/*
+This file is a reminder as to why I don't do HTML/CSS anymore.
+*/
+
+* {box-sizing:border-box;font-family:Verdana;font-size:12px;}
+
+input {font-size:inherit;}
+
+table {border-collapse:collapse;}
+td {border:1px solid hsla(0,0%,95%,1);padding:6px;}
+
+._hgh {display:block;}
+._low {display:none;}
+
+._box {width:100%;border:1px solid hsla(0,0%,95%,1);padding:6px;}
+
+:root                                        {width:100%;height:100%;}
+:root>body                                   {width:100%;height:100%;margin:0px;overflow:auto;}
+:root>body>.a                                {width:900px;padding:60px;margin:0px auto;}
+:root>body>.a>*                              {width:100%;}
+:root>body>.a>.chart-list                    {margin-top:60px;}
+:root>body>.b                                {position:fixed;top:0px;left:0px;width:100%;height:100%;background-color:hsla(0,0%,100%,0.95);}
+:root>body>.b>.a                             {position:absolute;top:0px;left:0px;width:100%;height:100%;overflow:auto;}
+:root>body>.b>.a>.a                          {width:900px;padding:30px;margin:0px auto;}
+:root>body>.b>.a>.a>.a                       {background-color:hsla(0,0%,100%,1);border:1px solid black;padding:30px;}
+:root>body>.z                                {position:fixed;top:0px;left:0px;width:100%;height:100%;background-color:hsla(0,0%,100%,0.90);}
+:root>body>.z    >.a                         {display:flex;width:100%;height:100%;justify-content:center;flex-direction:column;align-items:center;}
+:root>body>.z    >.a>.a                      {background-color:hsla(0,0%,100%,1);margin:12px 12px 0px 12px;text-align:center;font-size:200%;}
+:root>body>.z    >.a>.b                      {background-color:hsla(0,0%,100%,1);margin:0px 12px 12px 12px;text-align:left;width:auto;}
+:root>body>.z    >.a>.c                      {background-color:hsla(0,0%,100%,1);margin:0px 12px 12px 12px;text-align:left;width:auto;}
+:root>body>.z    >.a>.c>.p                   {display:inline-block;color:hsla(0,  0%, 0%,1);font-size:120%;}
+:root>body>.z    >.a>.c>.w                   {display:inline-block;color:hsla(0,100%,50%,1);font-size:120%;}
+:root>body>.z    >.a>.c>input[type='button'] {font-size:unset;}
+:root>body>.z    >.a>.c>*                    {margin:3px;}
+:root>body>.z.hgh                            {display:block;}
+:root>body>.z.low                            {display:none;}
+
+table                          {}
+table>tbody                    {}
+table>tbody>tr                 {}
+table>tbody>tr             >td {overflow:hidden;text-overflow:ellipsis;}
+table>tbody>tr:nth-child(1)>td {visibility:hidden;} /* Must exist for fixed table layout. */
+table>tbody>tr:nth-child(2)>td {text-align:center;font-size:150%;}
+table>tbody>tr:nth-child(2)>td {font-weight:bold;border-bottom-color:black;}
+table>tbody>tr:nth-child(3)>td {font-weight:bold;border-bottom-color:black;}
+
+:root>body>.a>table                                        {table-layout:fixed;width:100%;}
+:root>body>.a>table td                                     {overflow:hidden;text-overflow:ellipsis;}
+:root>body>.a>table td:nth-child(1)                        {width:290px;max-width:290px;}
+:root>body>.a>table td:nth-child(2)                        {width:290px;max-width:290px;}
+:root>body>.a>table td:nth-child(2)>input[type='text']     {width:100%;}
+:root>body>.a>table td:nth-child(2)>input[type='password'] {width:100%;}
+:root>body>.a>table td:nth-child(3)                        {}
+
+.chart-list>table                                        {table-layout:fixed;width:100%;}
+.chart-list>table td                                     {overflow:hidden;text-overflow:ellipsis;}
+.chart-list>table td:nth-child(1)                        {width: 90px;max-width: 90px;}
+.chart-list>table td:nth-child(2)                        {width:225px;max-width:225px;}
+.chart-list>table td:nth-child(3)                        {width:225px;max-width:225px;}
+.chart-list>table td:nth-child(4)                        {width: 30px;max-width: 30px;}
+.chart-list>table td:nth-child(5)                        {width: 30px;max-width: 30px;}
+.chart-list>table td:nth-child(6)                        {width: 30px;max-width: 30px;}
+.chart-list>table td:nth-child(7)                        {width: 60px;max-width: 60px;}
+.chart-list>table td:nth-child(8)                        {}
+
+:root>body>.b table                                        {table-layout:fixed;width:100%;}
+:root>body>.b table td                                     {overflow:hidden;text-overflow:ellipsis;}
+:root>body>.b table td:nth-child(1)                        {width: 90px;max-width: 90px;}
+:root>body>.b table td:nth-child(2)                        {width:270px;max-width:270px;}
+:root>body>.b table td:nth-child(3)                        {width:270px;max-width:270px;}
+:root>body>.b table td:nth-child(3)>input[type='text']     {width:100%;}
+:root>body>.b table td:nth-child(3)>input[type='file']     {width:100%;}
+:root>body>.b table td:nth-child(4)                        {width: 60px;max-width: 60px;}
+:root>body>.b table td:nth-child(5)                        {}
+
+:root>body>.z table                                        {table-layout:fixed;}
+:root>body>.z table                                        {table-layout:fixed;}
+
+:root>body>.a {z-index:0;}
+:root>body>.b {z-index:1;}
+:root>body>.z {z-index:2;}
+
+.udf {background:linear-gradient(to bottom right,transparent 0%,transparent 46%,hsla(0,0%,95%,1) 49%,hsla(0,0%,95%,1) 51%,transparent 54%,transparent 100%),
+                 linear-gradient(to bottom left ,transparent 0%,transparent 46%,hsla(0,0%,95%,1) 49%,hsla(0,0%,95%,1) 51%,transparent 54%,transparent 100%);}
+
+.chart-list                       {}
+.chart-list>table                 {}
+.chart-list>table>tbody           {}
+.chart-list>table>tbody>tr        {}
+.chart-list>table>tbody>tr>td     {}
+.chart-list>table>tbody>tr>td.idt {}
+.chart-list>table>tbody>tr>td.del {}
+
+/*
+._vis-hgh {visibility:visible;}
+._vis-low {visibility:hidden ;}
+table {border-collapse:collapse;}
+:root>body>.a {border-left:3px solid black;border-right:3px solid black;}
+:root>body>.d {border-bottom:3px solid black;}
+:root>body>.b {border-bottom:3px solid black;}
+:root>body>.a,
+:root>body>.b,
+:root>body>.c,
+:root>body>.d,
+:root>body>.e {padding:12px;overflow:auto;}
+:root>body>.d {position:absolute;top   :0px;left :0px;width:25%;height: 50%;}
+:root>body>.e {position:absolute;bottom:0px;left :0px;width:25%;height: 50%;}
+:root>body>.a {position:absolute;top   :0px;left :25%;width:50%;height:100%;}
+:root>body>.b {position:absolute;top   :0px;right:0px;width:25%;height: 33%;}
+:root>body>.c {position:absolute;bottom:0px;right:0px;width:25%;height: 67%;}
+:root>body>.a>table>tbody>tr:nth-child(1)     {border-top:1px solid black;}
+:root>body>.a>table>tbody>tr                  {border-bottom:1px solid black;}
+:root>body>.a>table>tbody>tr:nth-child(2n)    {background-color:hsla(0,0%,90%,1);}
+:root>body>.a>table>tbody>tr  >td:nth-child(1){border-left:1px solid hsla(0,0%,80%,1);}
+:root>body>.a>table>tbody>tr  >td             {border-right:1px solid hsla(0,0%,80%,1);}
+:root>body>.a>table>tbody>tr.a>td.b>button    {}
+:root>body>.a>table>tbody>tr.a>td.c>button    {}
+:root>body>.a>table>tbody>tr.a>td.d>button    {}
+:root>body>.a>table>tbody>tr.a>td.e           {}
+:root>body>.a>table>tbody>tr.a>td.f           {}
+:root>body>.a>table>tbody>tr.a>td.a           {}
+:root>body>.b>.a,
+:root>body>.b>.b        {padding-left:24px;}
+:root>body>.b>.a>.a.hgh {color:hsla(0,0%, 0%,1);}
+:root>body>.b>.a>.a.low {color:hsla(0,0%,85%,1);}
+:root>body>.e.hgh {background-color:hsla(0,0%, 50%,1);}
+:root>body>.e.low {background-color:hsla(0,0%,100%,1);}
+*/
+:root>body>*>.ttl {width:100%;font-size:150%;font-weight:bold;border-bottom:1px dashed black;}
+</style>
+<script src="../../shelf/local/butler.js"></script>
+<script src="../../shelf/local/sigma.js"></script>
+<script>Ω.mainDirectory = "./";</script>
+<script>
+
+// [https://docs.github.com/en/rest/reference/repos]
+
+var p = {
+	usrNmeS : U  ,
+	tknS    : U  ,
+	crtEA   : [] ,
+};
+
+// For debugging.
+var wrn = function(m){
+	llw(m);
+	//llw(arguments.callee.caller.name);// + JSON.stringify([...arguments.callee.caller.arguments])
+	;};
+
+var ww = function([fxnNmeS,argM]){
+	const lenMaxN = 60;
+	llw(fxnNmeS+"("+[...argM].map(_=>{
+		var s = JSON.stringify(_);
+		if (isS(s) && (s.length > lenMaxN)){
+			s = s.substr(0,lenMaxN) + "\"[...]";}
+		return s;}).join(",")+")");};
+
+p.p = function(s){
+	if (s === U){return T;}
+	var elm = µ.qd(":root>body>.z>.a>.c");
+	if (elm.innerHTML !== ""){elm.innerHTML += "<br>";}
+	elm.innerHTML += "<span class=\"p\">" + str(s) + "</span>";
+	return T;};
+p.w = function(s){
+	if (s === U){return T;}
+	var elm = µ.qd(":root>body>.z>.a>.c");
+	if (elm.innerHTML !== ""){elm.innerHTML += "<br>";}
+	elm.innerHTML += "<span class=\"w\">" + str(s) + "</span>";
+	elm.innerHTML += "<input type=\"button\" class=\"tal\" onclick=\"p.dec();\" value=\"Close\">";
+	return T;};
+
+// Progress jobs tracker.
+p.c = 0;
+p.inc = function(){
+	if (p.c > 0){return U;} // Gate.
+	p.c++;
+	µ.qd(":root>body>.z>.a>.c").innerHTML = "";
+	this.incdecDisplay();
+	return T;};
+p.dec = function(){
+	p.c--;
+	µ.qd(":root>body>.z>.a>.c").innerHTML = "";
+	this.incdecDisplay();
+	return T;};
+p.incdecDisplay = function(){
+	if (p.c > 0){µ.qd(":root>body>.z").classList.remove("low");µ.qd(":root>body>.z").classList.add("hgh");}
+	else        {µ.qd(":root>body>.z").classList.remove("hgh");µ.qd(":root>body>.z").classList.add("low");}
+	//....
+	if (p.c > 0){µ.qd(":root>body>.z>.a>.a").textContent = "Working on "+str(p.c)+" "+((p.c===1)?("task"):("tasks"))+".";}
+	else        {µ.qd(":root>body>.z>.a>.a").textContent = "";}
+	//....
+	if (p.c > 0){µ.qd(":root>body>.z>.a>.b").innerHTML   = "This process may take a few seconds.<br>The GitHub API is buggy and slow.";}
+	else        {µ.qd(":root>body>.z>.a>.b").textContent = "";}
+	return T;};
+
+p.request = async function(mtdS,urlS,datM,tknS){const _dbg = ["p.request",arguments];
+	if (tknS === U){tknS = p.tknS;}
+	return new Promise(async resolveFxn=>{
+		var xhr = new XMLHttpRequest();
+		xhr.timeout = 60 * 1000;
+		xhr.addEventListener("abort",(function(resolveFxn){return function(){llw("abort",this);resolveFxn(U);};})(resolveFxn));
+		xhr.addEventListener("error",(function(resolveFxn){return function(){llw("error",this);resolveFxn(U);};})(resolveFxn));
+		xhr.addEventListener("load" ,(function(resolveFxn){return function(){
+			if (this.status < 200 || this.status >= 300){llw("load",this);resolveFxn(U);return;}
+			resolveFxn({responseText:this.responseText,responseJson:JSON.parse(this.responseText)});};})(resolveFxn));
+		
+		// Chrome caches, we don't want that, and we aren't allowed to do this with headers,
+		// [even though that wouldn't make sense in this case anyway considering it appears to be local].
+		// The tip-off was that when the console was open, it worked, but otherwise it got stuck on the commit hash update check.
+		urlS += "?nocache="+str(π.clcCurT());
+		
+		xhr.open(mtdS,urlS,T);
+		xhr.setRequestHeader("Authorization","token "+tknS);
+		if (datM === U){xhr.send(                    );}
+		else           {xhr.send(JSON.stringify(datM));}
+		return;});};
+
+p.sleep = function(dltT){return new Promise(resolveFxn=>setTimeout(resolveFxn,dltT*1000));};
+
+// DIRTY
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = () => resolve(btoa(reader.result));
+    reader.onerror = error => reject(error);
+});
+const toBinary = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+});
+//await toBase64(file)
+function btoa_super(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+        function toSolidBytes(match, p1) {
+            return String.fromCharCode('0x' + p1);
+    }));
+}
+function atob_super(str) {
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
+p.genMetadataPath = function(rpoNmeS){
+	return "raw.githubusercontent.com/"+p.usrNmeS+"/"+rpoNmeS+"/main/metadata.txt";};
+
+p.wpeFxn = async function(){
+	var _ = await p.request("DELETE","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS,U);if (_ === U){return U;}
+	return T;};
+
+//------------------------------------------------------------------------------------------------------------------------
+
+// Assist.
+
+p.getRepoNameList = async function(){
+	// !!! Throttled to 100 rows per request. Can't test 100+ handling easily right now.
+	// !!! How does this act on a fresh account with no repos? Same 404 bullshit?
+	var o = await p.request("GET","https://api.github.com/users/"+p.usrNmeS+"/repos",U);
+	if (o === U){o = {responseJson:[]};} // !!! [Assumption until tested.] Failure overloaded as possible empty, copied from [[[getFileEntityList]]].
+	if (isA(o.responseJson) === F){o.responseJson = [];}
+	return o.responseJson.map(rpoE=>rpoE.name);};
+
+p.getEntity = async function(rpoNmeS,fleNmeS){
+	var o = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents/"+fleNmeS,U);
+	if (o === U){return U;}
+	if (o.responseJson.content === U){return U;}
+	return o.responseJson;};
+
+p.getFile = async function(rpoNmeS,fleNmeS){
+	var o = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents/"+fleNmeS,U);
+	if (o === U){return U;}
+	if (o.responseJson.content === U){return U;}
+	return atob_super(o.responseJson.content);};
+
+p.getFileJson = async function(rpoNmeS,fleNmeS){
+	var datS = await p.getFile(rpoNmeS,fleNmeS);if (datS === U){return U;}
+	var o = datax.json.decode({datS});if (o.staF === F){llw("");return U;}
+	return o.datM;};
+
+p.setFileJson = async function(rpoNmeS,fleNmeS,datE){
+	var    o = await this.setFleFxn(rpoNmeS,fleNmeS,btoa_super(JSON.stringify(datE)));if (o === U){return U;}
+	return T;};
+
+p.getEntityList = async function(rpoNmeS){
+	var o = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents",U);
+	if (o === U){o = {responseJson:[]};} // Failure overloaded as possible empty thanks to misguided GitHub API devs.
+	if (isA(o.responseJson) === F){o.responseJson = [];}
+	return o.responseJson;};
+
+p.getFileEntityList = async function(rpoNmeS){
+	var o = await p.getEntityList(rpoNmeS);
+	if (o === U){return U;}
+	return o.filter(fleE=>fleE.type==="file");};
+
+p.getFileNameList = async function(rpoNmeS){
+	var o = await p.getFileEntityList(rpoNmeS);
+	if (o === U){return U;}
+	return o.map(fleE=>fleE.name);};
+
+p.setFleFxn = async function(rpoNmeS,fleNmeS,datS){const _dbg = ["p.setFleFxn",arguments];
+	var    exsF = await p.getFleExsFFxn(rpoNmeS,fleNmeS                                                                                                                                     );if (exsF    === U){ww(_dbg);return U;}
+	var fleShaS =                      ((exsF===T)?(await p.getFleShaSFxn(rpoNmeS,fleNmeS)):(U)                                                                                             );if (fleShaS === U){        ;        ;}
+	var cmtShaS = await p.getCmtShaSFxn(rpoNmeS                                                                                                                                             );if (cmtShaS === U){ww(_dbg);return U;}
+	var _       = await p.request      ("PUT","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents/"+fleNmeS,{"message":"[FtB9 Semi-Sigma Action]","content":datS,"sha":fleShaS});if (_       === U){ww(_dbg);return U;}
+	var _       = await p.blcCmtFxn    (rpoNmeS,cmtShaS                                                                                                                                     );if (_       === U){ww(_dbg);return U;}
+	return T;};
+
+//------------------------------------------------------------------------------------------------------------------------
+
+// HIGH LEVEL
+
+// Delete File Function
+p.delFleFxn = async function(rpoNmeS,fleNmeS){const _dbg = ["p.delFleFxn",arguments];
+	                                                                                                                                                         ;if (fleNmeS === U){        ;return T;} // No work to do.
+	var    exsF    = await p.getFleExsFFxn(rpoNmeS,fleNmeS                                                                                                  );if (exsF    === U){ww(_dbg);return U;}
+	                                                                                                                                                         ;if (exsF    === F){        ;return T;} // No work to do.
+	var    fleShaS = await p.getFleShaSFxn(rpoNmeS,fleNmeS                                                                                                  );if (fleShaS === U){ww(_dbg);return U;}
+	var    cmtShaS = await p.getCmtShaSFxn(rpoNmeS                                                                                                          );if (cmtShaS === U){ww(_dbg);return U;}
+	var    _       = await p.request      ("DELETE","https://api.github.com/repos/"+p.usrNmeS+"/"+rpoNmeS+"/contents/"+fleNmeS,{"message":".","sha":fleShaS});if (_       === U){ww(_dbg);return U;}
+	var    _       = await p.blcCmtFxn    (rpoNmeS,cmtShaS                                                                                                  );if (_       === U){ww(_dbg);return U;}
+	return T;};
+
+// Get Commit SHA String Function.
+p.getCmtShaSFxn = async function(rpoNmeS){const _dbg = ["p.getCmtShaSFxn",arguments];
+	var    _       = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS+"/branches/main",U);if (_       === U){ww(_dbg);return U;}
+	var    cmtShaS =         jjjcl  ([_,"responseJson","commit","sha"],"",U                                          );if (cmtShaS === U){ww(_dbg);return U;}
+	return cmtShaS;};
+
+// Get File Exist Flag Function.
+p.getFleExsFFxn = async function(rpoNmeS,fleNmeS){const _dbg = ["p.getFleExsFFxn",arguments];
+	var    cmtShaS = await p.getCmtShaSFxn(rpoNmeS                                                                              );if (cmtShaS === U){ww(_dbg);return U;}
+	var    _       = await p.request      ("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS+"/git/trees/"+cmtShaS,U);if (_       === U){ww(_dbg);return U;}
+	var    treM    =         jjjcl        ([_,"responseJson","tree"],[],[]                                                      );
+	var    fleM    =                      (treM.find(_=>_.path===fleNmeS)                                                       );if (fleM    === U){        ;return F;}
+	return T;}
+
+// Get SHA String Function.
+p.getFleShaSFxn = async function(rpoNmeS,fleNmeS){const _dbg = ["p.getFleShaSFxn",arguments];
+	var    cmtShaS = await p.getCmtShaSFxn(rpoNmeS                                                                              );if (cmtShaS === U){ww(_dbg);return U;}
+	var    _       = await p.request      ("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS+"/git/trees/"+cmtShaS,U);if (_       === U){ww(_dbg);return U;}
+	var    treM    =         jjjcl        ([_,"responseJson","tree"],[],[]                                                      );
+	var    fleM    =                      (treM.find(_=>_.path===fleNmeS)                                                       );if (fleM    === U){ww(_dbg);return U;}
+	var    shaS    =         jjjcl        ([fleM,"sha"],"",U                                                                    );if (shaS    === U){ww(_dbg);return U;}
+	return shaS;};
+
+// Set File Raw Function.
+p.setFleRawFxn = async function(rpoNmeS,fleNmeS,datS){const _dbg = ["p.setFleRawFxn",arguments];
+	var _ = await p.setFleFxn(rpoNmeS,fleNmeS,btoa(datS));if (_ === U){ww(_dbg);return U;}
+	return T;};
+
+// Get Storage Usage Function.
+p.getStoUsgNFxn = async function(){const _dbg = ["p.getStoUsgNFxn",arguments];
+	// [!] Presumably comes in KB units, but isn't documented.
+	var    _       = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS,U);if (_       === U){ww(_dbg);return U;}
+	var    szePreN =         jjjcl  ([_,"responseJson","size"],0,U                                  );if (szePreN === U){ww(_dbg);return U;}
+	return szePreN * 1024;};
+
+//------------------------------------------------------------------------------------------------------------------------
+
+// Block Commit Fxn - Wait for changes to be reflected, but give up if too much time passes.
+p.blcCmtFxn = async function(rpoNmeS,cmtShaS_0){const _dbg = ["p.blcCmtFxn",arguments];
+	var lopT_0 = π.clcCurT() ;
+	var lopT_1 = U           ;
+	for (var lopN = 0;; lopN++){
+		var cmtShaS_1 = await p.getCmtShaSFxn(rpoNmeS);if (cmtShaS_1 === U){ww(_dbg);return U;}
+		if (cmtShaS_0 === cmtShaS_1){
+			llw("GitHub API delay (blc).");
+			lopT_1 = π.clcCurT();
+			if (lopT_1 - lopT_0 >= 60){ww(_dbg);return U;}
+			await p.sleep(0.1);
+			continue;}
+		break;}
+	return T;};
+
+//----
+
+// FTB9 SPECIFIC
+
+// Repository Name String.
+p.rpoNmeS = "ftb9-semi-sigma";
+
+// Assert Order Function.
+p.asrOrdFxn = async function(){const _dbg = ["p.asrOrdFxn",arguments];
+	// Assert repo.
+	var _ = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS,U); // Detect repo.
+	if (_ === U){
+		var _ = await p.request("POST","https://api.github.com/user/repos",{"name":p.rpoNmeS,"auto_init":F,"private":F});if (_ === U){ww(_dbg);return U;} // Create repo.
+		// Wait for changes to be reflected, but give up if too much time passes.
+		var lopT_0 = π.clcCurT() ;
+		var lopT_1 = U           ;
+		for (var lopN = 0;; lopN++){
+			var _ = await p.request("GET","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS,U); // Detect repo.
+			if (_ === U){
+				llw("GitHub API delay (ord).");
+				lopT_1 = π.clcCurT();
+				if (lopT_1 - lopT_0 >= 10){ww(_dbg);return U;}
+				await p.sleep(0.1);
+				continue;}
+			break;}
+		// First push because otherwise there will be no commits, complicating future logic.
+		var _ = await p.request("PUT","https://api.github.com/repos/"+p.usrNmeS+"/"+p.rpoNmeS+"/contents/init.txt",{"message":"[FtB9 Semi-Sigma Action]","content":""});if (_ === U){ww(_dbg);return U;}}
+	// Assert profile.
+	var exsF = await p.getFleExsFFxn(p.rpoNmeS,"user.txt");if (exsF === U){return U;}
+	if (exsF === F){
+		var _ = await p.setDexFxn({"name":p.usrNmeS});if (_ === U){ww(_dbg);return U;}}
+	return T;};
+
+// Authorization Validation Function.
+p.autVldFxn = async function(usrNmeS,tknS){const _dbg = ["p.autVldFxn",arguments];
+	var _ = await p.request("GET","https://api.github.com/user",U,tknS);if (_ === U){return U;}
+	return T;};
+
+// Delete a chart.
+p.delCrtFxn = async function(idtN){const _dbg = ["p.delCrtFxn",arguments];
+	
+	var idtS    = str(idtN                      );
+	var mtaNmeS =    ("crt-" + idtS + "-mta.txt");
+	
+	// Unlink.
+	var _ = await p.getDexFxn();if (_ === U){ww(_dbg);return U;}
+	if (isA(_["chart-collection"]) === F){_["chart-collection"] = [];}
+	_["chart-collection"].removeValueAll("./" + mtaNmeS);
+	var _ = await p.setDexFxn(_);if (_ === U){ww(_dbg);return U;}
+	
+	// Delete.
+	var datE = await p.getFileJson(p.rpoNmeS,mtaNmeS);if (datE === U){ww(_dbg);return U;}
+	if (datE["icon" ] !== U){var _ = await p.delFleFxn(p.rpoNmeS,datE["icon" ].substr(2));if (_ === U){ww(_dbg);return U;}}
+	if (datE["audio"] !== U){var _ = await p.delFleFxn(p.rpoNmeS,datE["audio"].substr(2));if (_ === U){ww(_dbg);return U;}}
+	if (datE["chart"] !== U){var _ = await p.delFleFxn(p.rpoNmeS,datE["chart"].substr(2));if (_ === U){ww(_dbg);return U;}}
+	var _ = await p.delFleFxn(p.rpoNmeS,mtaNmeS);if (_ === U){ww(_dbg);return U;}
+	
+	return T;};
+
+// Generate Identification Number Function - Find the first available idtN starting from 0.
+p.genIdtNFxn = async function(){const _dbg = ["p.genIdtNFxn",arguments];
+	var crtEA = await p.getCrtEAFxn();if (crtEA === U){ww(_dbg);return U;}
+	var idtN;{
+		for (idtN = 0;; idtN++){
+			if (crtEA.any(crtE=>crtE.idtN===idtN) === F){
+				break;}}}
+	return idtN;};
+
+// Get Chart Entity Array Function - Get chart list, with url and id pairs.
+p.getCrtEAFxn = async function(){const _dbg = ["p.getCrtEAFxn",arguments];
+	var mtaUrlSA;{
+		var datE = await p.getFileJson(p.rpoNmeS,"user.txt");if (datE === U){llw("");return U;}
+		mtaUrlSA = jjjcl([datE,"chart-collection"],[],[]);}
+	var crtEA;{
+		crtEA = await mtaUrlSA.mapAsync(async mtaUrlS=>{
+			var _    =       mtaUrlS.match    (/crt\-(\d+)\-mta\.txt/);if (_    === N){ww(_dbg);return U;}
+			var idtN =               num      (_[1]                  );
+			var datE = await p      .getMtaFxn(idtN                  );if (datE === U){ww(_dbg);return U;}
+			return {mtaUrlS,idtN,datE};});
+		crtEA = crtEA.filter(_=>_!==U);}
+	return crtEA;};
+
+// Get Dex Function - Get central dex metadata file.
+p.getDexFxn = async function(){const _dbg = ["p.getDexFxn",arguments];
+	var datE = await p.getFileJson(p.rpoNmeS,"user.txt");if (datE === U){ww(_dbg);return U;}
+	return datE;};
+
+// New Chart Function - Create a new chart, with just basic info.
+p.newCrtFxn = async function(){const _dbg = ["p.newCrtFxn",arguments];
+	var idtN    = await p.genIdtNFxn (                                  );if (idtN === U){ww(_dbg);return U;}
+	var idtS    =         str        (idtN                              );
+	var mtaNmeS =                    ("crt-" + idtS + "-mta.txt"        );
+	var ttlS    =                    ("Blank Chart #"+idtS              );
+	var ctrS    =                    ("raw.githubusercontent.com/"+p.usrNmeS+"/"+p.rpoNmeS+"/main/user.txt");
+	var datE    =                    ({"title":ttlS,"charter":ctrS}     );
+	var _       = await p.setFileJson(p.rpoNmeS,mtaNmeS,datE            );if (_    === U){ww(_dbg);return U;}
+	var _       = await p.getDexFxn  (                                  );if (_    === U){ww(_dbg);return U;}
+	if (isA(_["chart-collection"]) === F){_["chart-collection"] = [];}
+	_["chart-collection"].pushUnique("./" + mtaNmeS);
+	_["chart-collection"].sort((a,b)=>{
+		var a_o = a.match(/crt\-(\d+)\-mta\.txt/);if (a_o === N){return 0;}var a_idtN = num(a_o[1]);
+		var b_o = b.match(/crt\-(\d+)\-mta\.txt/);if (b_o === N){return 0;}var b_idtN = num(b_o[1]);
+		return a_idtN - b_idtN;});
+	var _       = await p.setDexFxn  (_                                 );if (_    === U){ww(_dbg);return U;}
+	return T;};
+
+// Set Dex Function - Set central dex metadata file.
+p.setDexFxn = async function(datM){const _dbg = ["p.setDexFxn",arguments];
+	var _ = await p.setFileJson(p.rpoNmeS,"user.txt",datM);if (_ === U){ww(_dbg);return U;}
+	return T;};
+
+//....
+
+// Chart metadata functions.
+p.genMtaNmeSFxn = async function(idtN){const _dbg = ["p.genMtaNmeSFxn",arguments];
+	var    idtS    =            str          (idtN                      );
+	var    nmeS    =                         ("crt-" + idtS + "-mta.txt");
+	return nmeS;};
+p.getMtaFxn = async function(idtN){const _dbg = ["p.getMtaFxn",arguments];
+	var    nmeS    = await this.genMtaNmeSFxn(idtN                      );if (nmeS === U){ww(_dbg);return U;}
+	var    datE    = await this.getFileJson  (this.rpoNmeS,nmeS         );if (datE === U){ww(_dbg);return U;}
+	return datE;};
+p.setMtaFxn = async function(idtN,datE){const _dbg = ["p.setMtaFxn",arguments];
+	var    nmeS    = await this.genMtaNmeSFxn(idtN                      );if (nmeS === U){ww(_dbg);return U;}
+	var    _       = await this.setFileJson  (this.rpoNmeS,nmeS,datE    );if (_    === U){ww(_dbg);return U;}
+	return T;};
+p.altMtaFxn = async function(idtN,altFxn){const _dbg = ["p.altMtaFxn",arguments];
+	var    datE    = await this.getMtaFxn    (idtN                      );if (datE === U){ww(_dbg);return U;}
+	var    datAltE =            altFxn       (datE                      );
+	var    _       = await this.setMtaFxn    (idtN,datAltE              );if (_    === U){ww(_dbg);return U;}
+	return T;};
+p.delMtaFxn = async function(idtN){const _dbg = ["p.delMtaFxn",arguments];
+	var    nmeS    = await this.genMtaNmeSFxn(idtN                      );if (nmeS === U){ww(_dbg);return U;}
+	var    _       = await this.delFleFxn    (this.rpoNmeS,nmeS         );if (_    === U){ww(_dbg);return U;}
+	return T;};
+
+//....
+
+// Files - May return F.
+p.getFleNmeSFxn = async function(idtN,wchS){const _dbg = ["p.getFleNmeSFxn",arguments];
+	var    datE       = await this.getMtaFxn(idtN       );if (datE        === U      ){ww(_dbg);return U;}
+	var    fleM       =                     (datE[wchS] );if (isS(fleM)   === F      ){        ;return F;}
+	var    fleS       =                     (fleM       );
+	var    preLenN    =                     ("./".length);if (fleS.length <   preLenN){ww(_dbg);return U;}
+	var    fleNmeTalS =       fleS.substr   (preLenN    );
+	return fleNmeTalS;};
+
+//....
+
+// GUI
+
+//
+p.gui_asr_txt = async function(that,idtN,datE,wchS,mniS){const _dbg = ["p.gui_asr_txt",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p(                          );var srcS    =                     (µ.qd(µ.qu(that,"tr"),"td.val>*").value);
+	p.p(                          );var datAltE =       π.ooas        (π.cc(datE),{[wchS] : srcS}                             );
+	p.p("Updating information."   );var _       = await p.setMtaFxn   (idtN,datAltE                                           );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing edit panel."  );var _       = await p.edtCrtGuiFxn(idtN                                                   );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _       = await p.prnCrtCleFxn(                                                       );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.dec();
+	return T;}
+
+//
+p.gui_del_txt = async function(that,idtN,datE,wchS,mniS){const _dbg = ["p.gui_del_txt",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p(                          );var datAltE =       π.ooas         (π.cc(datE),{[wchS] : U});
+	p.p("Updating information."   );var _       = await p.setMtaFxn    (idtN,datAltE           );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing edit panel."  );var _       = await p.edtCrtGuiFxn (idtN                   );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _       = await p.prnCrtCleFxn (                       );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.dec();
+	return T;}
+
+//
+p.gui_asr_fle = async function(that,idtN,datE,wchS,mniS){const _dbg = ["p.gui_asr_fle",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p("Finding old file."       );var nmeOldS = await p.getFleNmeSFxn(idtN,wchS                                          );if (nmeOldS === U){p.w("Failure"           );ww(_dbg);return U;}
+	p.p(                          );var fleM    =                      (µ.qd(µ.qu(that,"tr"),"input[type='file']").files[0]);if (fleM    === U){p.w("No file specified.");ww(_dbg);return U;}
+	p.p(                          );var nmeNewS =                      ("crt-" + str(idtN) + "-" + mniS + "_" + fleM.name  );
+	p.p("Deleting old file."      );var _       = await p.delFleFxn    (this.rpoNmeS.nmeOldS                               );if (_       === U){p.w("Failure"           );ww(_dbg);return U;}
+	p.p(                          );var datAltE =       π.ooas         (π.cc(datE),{[wchS] : "./" + nmeNewS}               );
+	p.p("Linking new file."       );var _       = await p.setMtaFxn    (idtN,datAltE                                       );if (_       === U){p.w("Failure"           );ww(_dbg);return U;}
+	p.p("Uploading new file."     );var _       = await p.setFleRawFxn (this.rpoNmeS,nmeNewS,await toBinary(fleM)          );if (_       === U){p.w("Failure"           );ww(_dbg);return U;}
+	p.p("Refreshing edit panel."  );var _       = await p.edtCrtGuiFxn (idtN                                               );if (_       === U){p.w("Failure"           );ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _       = await p.prnCrtCleFxn (                                                   );if (_       === U){p.w("Failure"           );ww(_dbg);return U;}
+	p.dec();
+	return T;}
+
+//
+p.gui_del_fle = async function(that,idtN,datE,wchS,mniS){const _dbg = ["p.gui_del_fle",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p("Finding old file."       );var nmeOldS = await p.getFleNmeSFxn(idtN,wchS              );if (nmeOldS === U){p.w("Failure");ww(_dbg);return U;}
+	p.p(                          );                                                            ;if (nmeOldS === F){              ;        ;return T;}
+	p.p(                          );var datAltE =       π.ooas         (π.cc(datE),{[wchS] : U});
+	p.p("Unlinking new file."     );var _       = await p.setMtaFxn    (idtN,datAltE           );if (_       === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Deleting old file."      );var _       = await p.delFleFxn    (this.rpoNmeS,nmeOldS   );if (_       === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing edit panel."  );var _       = await p.edtCrtGuiFxn (idtN                   );if (_       === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _       = await p.prnCrtCleFxn (                       );if (_       === U){p.w("Failure");ww(_dbg);return U;}
+	p.dec();
+	return T;};
+
+//
+p.gui_new_crt = async function(){const _dbg = ["p.gui_new_crt",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p("Creating new chart."     );var _ = await p.newCrtFxn   ();if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _ = await p.prnCrtCleFxn();if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.dec();
+	return T;};
+
+//
+p.gui_edt_crt = async function(idtN){const _dbg = ["p.gui_edt_crt",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p("Retrieving chart data."  );var _ = await p.edtCrtGuiFxn(idtN);if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _ = await p.prnCrtCleFxn(    );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.dec();};
+
+//
+p.gui_del_crt = async function(idtN){const _dbg = ["p.gui_del_crt",arguments];
+	p.inc();
+	p.p("Beginning."              );
+	p.p("Deleting chart."         );var _ = await p.delCrtFxn   (idtN);if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.p("Refreshing charts panel.");var _ = await p.prnCrtCleFxn(    );if (_ === U){p.w("Failure");ww(_dbg);return U;}
+	p.dec();};
+
+//
+p.gui_aut = async function(){const _dbg = ["p.gui_aut",arguments];
+	p.inc();
+	p.p("Beginning."                            );
+	p.p(                                        );var   usrNmeS =                     (µ.qd(".username").value  );if (usrNmeS === U){p.w("Failure."                             );ww(_dbg);return U;}
+	p.p(                                        );var   tknS    =                     (µ.qd(".token").value     );if (tknS    === U){p.w("Failure."                             );ww(_dbg);return U;}
+	p.p("Validating authentication information.");var   _       = await p.autVldFxn   (usrNmeS,tknS             );if (_       === U){p.w("Incorrect authentication information.");ww(_dbg);return U;}
+	p.p(                                        );    p.usrNmeS =                     (usrNmeS                  );
+	p.p(                                        );    p.tknS    =                     (tknS                     );
+	p.p("Asserting repo preparedness."          );var   _       = await p.asrOrdFxn   (                         );if (_       === U){p.w("Could not assert repo preparedness."  );ww(_dbg);return U;}
+	p.p("Refreshing charts panel."              );var   _       = await p.prnCrtCleFxn(                         );if (_       === U){p.w("Failure."                             );ww(_dbg);return U;}
+	p.dec();};
+
+//
+p.edtCrtGuiFxn = async function(idtN){
+	var datE = await p.getMtaFxn(idtN);if (datE === U){return U;}
+	µ.ma(µ.qd(":root>body"),µ.m(
+		[".b",[
+			[".a",[
+				[".a",[
+					[".a",[
+						["input[type='button'][value='Close']",{leftmousedown:(function(){return async function(){await p.edtCrtGuiClsFxn();};})()}],
+						["",{d:{style:"display:inline-block;width:6px;height:1px;"}}],
+						["table",[
+							["tbody",[
+								["tr",[
+									["td"],
+									["td"],
+									["td"],
+									["td"],
+									["td"],
+								]],
+								["tr",[
+									["td",{d:{colspan:5}},"Edit Chart"],
+								]],
+								["tr",[
+									["td.lbl","Data Label"],
+									["td.cur","Current Data"],
+									["td.val","Change To..."],
+									["td.asr","Save"],
+									["td.del","Clear"],
+								]],
+								["tr",[
+									["td.lbl","ID"],
+									["td.cur",{d:{title:"Chart #"+str(idtN)}},"Chart #"+str(idtN)],
+									["td.val",""],
+									["td.asr",""],
+									["td.del",""],
+								]],
+								["tr",[
+									["td.lbl","Title"],
+									["td.cur"+((datE.title===U)?(".udf"):("")),{d:{title:jjjcl([datE,"title"],"","")}},jjjcl([datE,"title"],"","")],
+									["td.val",[
+										["input[type='text']",{d:{value:jjjcl([datE,"title"],"","")}}],
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_txt(this,idtN,datE,"title","ttl");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_txt(this,idtN,datE,"title","ttl");};})(idtN,datE)}],
+									]],
+								]],
+								["tr",[
+									["td.lbl","Origin"],
+									["td.cur"+((datE.origin===U)?(".udf"):("")),{d:{title:jjjcl([datE,"origin"],"","")}},jjjcl([datE,"origin"],"","")],
+									["td.val",[
+										["input[type='text']",{d:{value:jjjcl([datE,"origin"],"","")}}],
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_txt(this,idtN,datE,"origin","ori");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_txt(this,idtN,datE,"origin","ori");};})(idtN,datE)}],
+									]],
+								]],
+								["tr",[
+									["td.lbl","Charter"],
+									["td.cur"+((datE.charter===U)?(".udf"):("")),{d:{title:jjjcl([datE,"charter"],"","")}},jjjcl([datE,"charter"],"","")],
+									["td.val",[
+										["input[type='text']",{d:{value:jjjcl([datE,"charter"],"","")}}],
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_txt(this,idtN,datE,"charter","ctr");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_txt(this,idtN,datE,"charter","ctr");};})(idtN,datE)}],
+									]],
+								]],
+								["tr",[
+									["td.lbl","Icon"],
+									["td.cur"+((datE.icon===U)?(".udf"):("")),{d:{title:jjjcl([datE,"icon"],"","")}},jjjcl([datE,"icon"],"","")],
+									["td.val",[
+										["input[type='file']"],
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_fle(this,idtN,datE,"icon","ico");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_fle(this,idtN,datE,"icon","ico");};})(idtN,datE)}],
+									]],
+								]],
+								["tr",[
+									["td.lbl","Song"],
+									["td.cur"+((datE.audio===U)?(".udf"):("")),{d:{title:jjjcl([datE,"audio"],"","")}},jjjcl([datE,"audio"],"","")],
+									["td.val",[
+										["input[type='file']"],
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_fle(this,idtN,datE,"audio","aud");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_fle(this,idtN,datE,"audio","aud");};})(idtN,datE)}],
+									]],
+								]],
+								["tr",[
+									["td.lbl","Chart"],
+									["td.cur"+((datE.chart===U)?(".udf"):("")),{d:{title:jjjcl([datE,"chart"],"","")}},jjjcl([datE,"chart"],"","")],
+									["td.val",[
+										["input[type='file']"],
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_fle(this,idtN,datE,"chart","nte");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_fle(this,idtN,datE,"nte");};})(idtN,datE)}],
+									]],
+								]],
+								["tr",[
+									["td.lbl","Information"],
+									["td.cur"+((datE.information===U)?(".udf"):("")),{d:{title:jjjcl([datE,"information"],"","")}},jjjcl([datE,"information"],"","")],
+									["td.val",[
+										["textarea"], // [!] Set immediately after DOM building. See bottom of this function.
+									]],
+									["td.asr",[
+										["input[type='button'][value='Save']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_asr_txt(this,idtN,datE,"information","inf");};})(idtN,datE)}],
+									]],
+									["td.del",[
+										["input[type='button'][value='Clear']",{leftmousedown:(function(idtN,datE){return async function(){await p.gui_del_txt(this,idtN,datE,"information","inf");};})(idtN,datE)}],
+									]],
+								]],
+							]],
+						]],
+					]],
+				]],
+			]],
+		]],
+	));
+	// Textarea elements don't respect initial value property, but respect it afterward.
+	// If you set it initially within the tags, our system will convert newlines to <br>s, which is undesirable.
+	µ.qd(":root>body>.b>.a>.a>.a>table>tbody>tr>td.val>textarea").value = jjjcl([datE,"information"],"","");
+	return T;};
+
+p.edtCrtGuiClsFxn = async function(){
+	µ.md(µ.qd(":root>body"),µ.qd(":root>body>.b"));};
+
+//---- CLEANED ABOVE
+
+// Print the interactive chart list to the screen.
+p.prnCrtCleFxn = async function(){
+	var szeN  = await p.getStoUsgNFxn();if (szeN  === U){return U;}
+	var crtEA = await p.getCrtEAFxn  ();if (crtEA === U){return U;}
+	µ.rr(µ.qd(".chart-list"),µ.m([[
+		["","GitHub storage space in use: ~" + π.byteCToFancy(szeN) + "."],
+		["",{d:{style:"margin-top:6px;"}}],
+		["input[type='button'][value='Create New Chart']",{leftmousedown:(function(){return async function(){await p.gui_new_crt();};})()}],
+		["",{d:{style:"display:inline-block;width:6px;height:1px;"}}],
+		["input[type='button'][value='Download GitHub Data Zip']",{leftmousedown:(function(){return async function(){window.open("https://github.com/"+p.usrNmeS+"/"+p.rpoNmeS+"/archive/refs/heads/main.zip");};})()}],
+		["table",[
+			["tbody",[
+				["tr",[
+					["td"],
+					["td"],
+					["td"],
+					["td"],
+					["td"],
+					["td"],
+					["td"],
+					["td"],
+				]],
+				["tr",[
+					["td",{d:{colspan:8}},"Charts"],
+				]],
+				["tr",[
+					["td","ID"],
+					["td","Title"],
+					["td","Origin"],
+					["td","I"],
+					["td","A"],
+					["td","C"],
+					["td","Edit"],
+					["td","Delete"],
+				]],
+			].concat(crtEA.map(crtE=>{
+				return ["tr[data-idt='"+str(crtE.idtN)+"']",[
+					["td.idt",{d:{title:"Chart #"+str(crtE.idtN)}},"Chart #"+str(crtE.idtN)],
+					["td.ttl",{d:{title:jjjcl([crtE.datE,"title" ],"",U)}},jjjcl([crtE.datE,"title" ],"","")],
+					["td.ori",{d:{title:jjjcl([crtE.datE,"origin"],"",U)}},jjjcl([crtE.datE,"origin"],"","")],
+					["td.ico",{d:{title:jjjcl([crtE.datE,"icon"  ],"",U)}},jjjcl([crtE.datE,"icon"  ],"",U)!==U?"O":""],
+					["td.aud",{d:{title:jjjcl([crtE.datE,"audio" ],"",U)}},jjjcl([crtE.datE,"audio" ],"",U)!==U?"O":""],
+					["td.nte",{d:{title:jjjcl([crtE.datE,"chart" ],"",U)}},jjjcl([crtE.datE,"chart" ],"",U)!==U?"O":""],
+					["td.edt",[
+						["input[type='button'][value='Edit']",{leftmousedown:(function(idtN){return async function(){await p.gui_edt_crt(idtN);};})(crtE.idtN)}],
+					]],
+					["td.del",[
+						["input[type='button'][value='Delete']",{leftmousedown:(function(idtN){return async function(){await p.gui_del_crt(idtN);};})(crtE.idtN)}],
+					]],
+				]];}))
+			],
+		]],
+		["",{d:{style:"margin-top:60px;"}}],
+		["._box",[
+			["",{d:{style:"font-weight:bold;font-size:120%;"}},"About Registration"],
+			["","\n"],
+			["","Your profile URL is [raw.githubusercontent.com/"+p.usrNmeS+"/"+p.rpoNmeS+"/main/user.txt]."],
+			["","Include that in a message to FtB staff to get registered for chart publication."],
+			["","After you're registered (just once), your charts will all be visible within FtB."],
+		]],
+	]]));
+	return T;};
+
+//------------------------------------------------------------------------------------------------------------------------
+
+µ.onLoad(0,async ()=>{
+	µ.rr(µ.qd(":root>body"),µ.m([[
+		[".a",[
+			["table",[
+				["tbody",[
+					["tr",[
+						["td"],
+						["td"],
+						["td"],
+					]],
+					["tr",[
+						["td",{d:{colspan:3}},"Authentication"],
+					]],
+					["tr",[
+						["td","Data Label"],
+						["td","Data"],
+						["td","Help"],
+					]],
+					["tr",[
+						["td",[
+							["","GitHub Username"],
+						]],
+						["td",[
+							["input[type='text'].username",{d:{value:""}}], // !!! PRIVATE (if you fill it in during debugging)
+						]],
+						["td",[
+							["a",{d:{href:"https://github.com/login"}},"Sign Up (@GitHub)"],
+						]],
+					]],
+					["tr",[
+						["td",[
+							["","GitHub Personal Access Token (public_repo)"],
+						]],
+						["td",[
+							["input[type='password'].token",{d:{value:""}}], // !!! PRIVATE (if you fill it in during debugging)
+						]],
+						["td",[
+							["a",{d:{href:"https://github.com/settings/tokens"}},"Create Token (@GitHub)"],
+						]],
+					]],
+					["tr",[
+						["td"],
+						["td",[
+							["input[type='button'][value='Use This GitHub Account']",{leftmousedown:(function(){return async function(){await p.gui_aut();};})()}],
+						]],
+						["td"],
+					]],
+				]],
+			]],
+			[".chart-list"],
+			["",{d:{style:"margin-top:60px;"}}],
+			["._box",[
+				["",{d:{style:"font-weight:bold;font-size:120%;"}},"Q&A"],
+				["","\n"],
+				["","Q: I get an error, but when I do the same actions again it works."],
+				["","A: The GitHub API will randomly return errors. Sometimes you simply have to try again."],
+				["","\n"],
+				["","Q: My files take several minutes to update in FtB9."],
+				["","A: GitHub raw links update every few minutes. Please wait and keep checking."],
+			]],
+		]],
+		[".z.low",[
+			[".a",[
+				[".a",""],
+				[".b",""],
+				[".c",""],
+			]],
+		]],
+	]]));
+});
+</script>
+</head>
+<body></body>
+</html>

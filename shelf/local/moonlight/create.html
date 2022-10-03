@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>/moonlight-test/</title>
+<meta charset="UTF-8">
+<script src="../butler.js"></script>
+<script src="main.js"></script>
+<script>
+// !!! TODO - code generation, see compile()
+//
+// wireE : {pnt0V,pnt1V}
+// compE : {chipE,portEAO:{i:[portE...],o:[portE...]}}
+// portE : {nameS,pntV}
+var p = {
+	// A "chip"["chip"     ] is a chip.
+	// A "comp"["component"] is a placed chip, with position and orientation.
+	anc0V       : U  , // reservation | anchor at latest previous snap used for wire drawing
+	chipEO      : {} , // filled later
+	chipSlctIDS : U  ,
+	compEA      : [] ,
+	compSlctIDS : U  ,
+	g           : U  , // reservation
+	wireEA      : [] ,
+	//....
+	chipWidthN    :  8   ,
+	gridSpaceN    : 18   ,
+	junctionSizeN :  4   ,
+	portSizeN     :  8   ,
+	wireDrawProxP :  0.3 ,
+	wireSizeN     :  4   ,
+	//....
+	chipPlace : function(chipSlctIDS=U,pntV=U){
+		if (chipSlctIDS !== U){this.chipSlctIDS = chipSlctIDS;}
+		if (this.chipSlctIDS === U){ll("ERR | chipPlace() | chipSlctIDS === U");return;}
+		var chipE = this.chipEO[this.chipSlctIDS];if (chipE === U){ll("ERR | chipPlace() | chipE === U");return;}
+		this.compEA.push({chipE,portEAO:{
+			i:Object.keys(chipE.importEO).map((nameS,y)=>({nameS,pntV:{x:1+((pntV===U)?0:pntV.x),y:y+((pntV===U)?0:pntV.y)}})),
+			o:Object.keys(chipE.exportEO).map((nameS,y)=>({nameS,pntV:{x:this.chipWidthN+((pntV===U)?0:pntV.x),y:y+((pntV===U)?0:pntV.y)}})),
+			}});},
+	compile : function(){
+		//this.wireEA.forEach(wireE=>{
+		//	wireE.pnt0V
+		//	wireE.pnt1V
+		//});
+		//....
+		//var unitE = await moonlight.gen({
+		//	typeS     : "19",
+		//	nameS     : "chart-dat-mux",
+		//	prpMO     : {
+		//		"s0" : p.onlineF?1:0,},
+		//	bindingOO : {
+		//		"chart-dat-to-notes" : {
+		//			"o0" : "chartTxtS",},},});
+	},
+	render : function(){
+		this.g.clear();
+		
+		// Draw grid.
+		for (var x = 0; x < 300; x++){
+			for (var y = 0; y < 300; y++){
+				this.g.rectFill(x*this.gridSpaceN,y*this.gridSpaceN,1,1,{colorE:[0,0,0.5,1]});}}
+		
+		// Draw components.
+		this.compEA.forEach(compE=>{
+			var xMinN = U;
+			var xMaxN = U;
+			var yMinN = U;
+			var yMaxN = U;
+			// If no ports, continue.
+			if (compE.portEAO.i.length + compE.portEAO.o.length === 0){return;}
+			// Build AABB.
+			compE.portEAO.forEach(portEA=>{
+				portEA.forEach(portE=>{
+					if (xMinN === U || portE.pntV.x < xMinN){xMinN = portE.pntV.x;}
+					if (xMaxN === U || portE.pntV.x > xMaxN){xMaxN = portE.pntV.x;}
+					if (yMinN === U || portE.pntV.y < yMinN){yMinN = portE.pntV.y;}
+					if (yMaxN === U || portE.pntV.y > yMaxN){yMaxN = portE.pntV.y;}});});
+			this.g.quadFill(
+				(xMinN*this.gridSpaceN),
+				(yMinN*this.gridSpaceN)-this.portSizeN,
+				(xMaxN*this.gridSpaceN),
+				(yMaxN*this.gridSpaceN)+this.portSizeN,
+				{colorE:[0,0,0.25,1]});
+			this.g.textFill((xMinN+((xMaxN-xMinN)/2))*this.gridSpaceN,(yMinN+((yMaxN-yMinN)/2))*this.gridSpaceN,"M" + compE.chipE.typeS);
+			compE.portEAO.forEach((portEA,portTypeS)=>{
+				portEA.forEach(portE=>{
+					this.g.circleFill(
+						portE.pntV.x * this.gridSpaceN,
+						portE.pntV.y * this.gridSpaceN,
+						this.portSizeN,
+						{
+							colorE : [0,0,0,1],});
+					this.g.textFill(
+						(portE.pntV.x*this.gridSpaceN)+((portTypeS==="i")?(this.portSizeN):(-this.portSizeN)),
+						portE.pntV.y*this.gridSpaceN,
+						portE.nameS,{
+							fontSizeN  : 8,
+							textAlignS : portTypeS==="i"?"left":"right",});
+					;});});
+			;});
+		
+		// Draw wires.
+		this.wireEA.forEach(wireE=>{
+			this.g.circleFill(
+				wireE.pnt0V.x * this.gridSpaceN,
+				wireE.pnt0V.y * this.gridSpaceN,
+				this.junctionSizeN,
+				{
+					colorE : [0,0,0.75,1],});
+			this.g.circleFill(
+				wireE.pnt1V.x * this.gridSpaceN,
+				wireE.pnt1V.y * this.gridSpaceN,
+				this.junctionSizeN,
+				{
+					colorE : [0,0,0.75,1],});
+			this.g.lineFill(
+				wireE.pnt0V.x * this.gridSpaceN,
+				wireE.pnt0V.y * this.gridSpaceN,
+				wireE.pnt1V.x * this.gridSpaceN,
+				wireE.pnt1V.y * this.gridSpaceN,
+				{
+					colorE       : [0,0,0.75,1],
+					lineCapS     : "square",
+					lineWidthN   : this.wireSizeN,});});
+		;},
+	// Take a wire and break it up into prime factors.
+	// Prevents the slowness of mousemove from letting us create really long lines that don't have any intermediate contact points.
+	wireDecompose : function(wireEImport){
+		var xDltN = wireEImport.pnt1V.x - wireEImport.pnt0V.x;
+		var yDltN = wireEImport.pnt1V.y - wireEImport.pnt0V.y;
+		var xDltAbsN = Math.abs(xDltN);
+		var yDltAbsN = Math.abs(yDltN);
+		var maxAbsN = Math.max(xDltAbsN,yDltAbsN);
+		var foundF;
+		var segN = 1;
+		var xDltPileN = xDltAbsN;
+		var yDltPileN = yDltAbsN;
+		do{
+			foundF = F;
+			for (var n = 2; n <= maxAbsN; n++){
+				if (xDltPileN % n === 0 && yDltPileN % n === 0){
+					foundF = T;
+					segN *= n;
+					xDltPileN /= n;
+					yDltPileN /= n;}}
+		}while(foundF);
+		var xSnapN = xDltN / segN;
+		var ySnapN = yDltN / segN;
+		var res = [];
+		for (var n = 0,nn = 1; n <= segN-1 && nn <= segN; n++,nn++){
+			var wireE = {
+				pnt0V:{
+					x : wireEImport.pnt0V.x + (xSnapN * n),
+					y : wireEImport.pnt0V.y + (ySnapN * n),},
+				pnt1V:{
+					x : wireEImport.pnt0V.x + (xSnapN * nn),
+					y : wireEImport.pnt0V.y + (ySnapN * nn),},};
+			res.push(wireE);}
+		return res;},
+	pntVEqFxn : function(pnt0V,pnt1V){
+		return pnt0V.x === pnt1V.x && pnt0V.y === pnt1V.y;},
+	wireEEqFxn : function(wire0E,wire1E){
+		return (this.pntVEqFxn(wire0E.pnt0V,wire1E.pnt0V) && this.pntVEqFxn(wire0E.pnt1V,wire1E.pnt1V))
+		||     (this.pntVEqFxn(wire0E.pnt0V,wire1E.pnt1V) && this.pntVEqFxn(wire0E.pnt1V,wire1E.pnt0V));},
+	wireToggle : function(wireEImport){
+		var foundF = F;
+		this.wireEA.some((wireE,wireEAI)=>{
+			if (this.wireEEqFxn(wireEImport,wireE)){
+				this.wireEA.splice(wireEAI,1);
+				foundF = T;
+				return T;}
+			return F;});
+		if (foundF){return;}
+		this.wireEA.push(wireEImport);},
+	convertCoordAbsSnap : function(xImport,yImport){
+		var x = Math.round(xImport/p.gridSpaceN);
+		var y = Math.round(yImport/p.gridSpaceN);
+		var xErr = Math.abs((x * p.gridSpaceN) - xImport) / p.gridSpaceN;
+		var yErr = Math.abs((y * p.gridSpaceN) - yImport) / p.gridSpaceN;
+		return {x,y,xErr,yErr};},
+	mousemove : function(xImport,yImport){
+		if (Ω.mousedownF){
+			this.mouseisdown(xImport,yImport);}},
+	mousedown : function(xImport,yImport){
+		var {x,y,xErr,yErr} = this.convertCoordAbsSnap(xImport,yImport);
+		this.anc0V = {x,y};
+		this.mouseisdown(xImport,yImport);},
+	mouseisdown : function(xImport,yImport){
+		var {x,y,xErr,yErr} = this.convertCoordAbsSnap(xImport,yImport);
+		if (this.anc0V === U){ll("ERR : mouseisdown() sees undefined anc0V");return;}
+		if (xErr < this.wireDrawProxP && yErr < this.wireDrawProxP){
+			var dltV = {x:x-this.anc0V.x,y:y-this.anc0V.y};
+			// Only allow slopes of 0, 1, or 2.
+			// JavaScript has some really good implementations of Infinity being no-throw and the reciprocal of zero.
+			var ratioN = Math.abs(dltV.y / dltV.x);if (ratioN === Infinity || (0 < ratioN && ratioN < 1)){ratioN = 1/ratioN;}
+			if (ratioN === 0 || ratioN === 1 || ratioN === 2){
+				var wireFullE = {pnt0V:this.anc0V,pnt1V:{x,y}};
+				if (!this.pntVEqFxn(wireFullE.pnt0V,wireFullE.pnt1V)){
+					var wireEA = this.wireDecompose(wireFullE);
+					wireEA.forEach(wireE=>{
+						this.wireToggle(wireE);});
+					this.render();
+					this.anc0V = {x,y};}}}},
+	mouseup   : function(xImport,yImport){
+		this.anc0V = U;},
+};
+µ.onLoad(0,async ()=>{
+	µ.rr(document.body,µ.m([[
+		["canvas.main"],
+		[".control",[
+			[".button",{mousedown:function(){
+				p.chipPlace();
+				p.render();},},"Place Chip."],
+			[".button",{mousedown:function(){
+				p.compEA.forEach(compE=>{
+					compE.portEAO.forEach(portEA=>{
+						portEA.forEach(portE=>{
+							portE.pntV.y++;});});});
+				p.render();},},"Shift All Down 1."],
+			[".button",{mousedown:function(){
+				p.compEA.forEach(compE=>{
+					compE.portEAO.forEach(portEA=>{
+						portEA.forEach(portE=>{
+							portE.pntV.x++;});});});
+				p.render();},},"Shift All right 1."],
+		]],
+	]]));
+	var hue360N = 280;
+	µ.maCSS(document.head,this.parent.selectorRootS,µ.cssCompile({
+		"*"                                                  : "box-sizing:border-box;",
+		":root"                                              : "¥s:1000‰;",
+		":root>body"                                         : "¥w:1000‰;¥h:1000‰;¥m:0px;¥ff:Monaco,monospace;¥fs:14px;¥c:hsla("+hue360N+",100%,90%,1);¥bgc:hsla("+hue360N+",0%,0%,1);¥oy:hidden;",
+		":root>body>.chipC"                                  : "¥:flex;flex-flow:column wrap;¥hmax:calc(1000‰ - "+(6*2)+"px);¥m:"+6+"px;",
+		":root>body>.chipC>.chip"                            : "¥:flex-row;justify-content:center;¥w:"+350+"px;¥m:"+6+"px;", //¥bo:1px solid red;
+		":root>body>.chipC>.chip>.portC"                     : "flex:1 1 0px;¥ox:hidden;¥oy:auto;¥:one-row;¥fs:10px;",
+		":root>body>.chipC>.chip>.portC>.txt"                : "¥c:hsla(0,0%,90%,1);",
+		":root>body>.chipC>.chip>.portC>.txt::before"        : "¥c:hsla(0,0%,40%,1);",
+		":root>body>.chipC>.chip>.unit"                      : "flex:0 0 100px;¥bo:1px solid hsla(0,0%,0%,1);display:flex;justify-content:center;align-items:center;¥bgc:hsla(0,0%,0%,1);¥brad:2px;¥bsw:0px 0px 0px 2px hsla(0,0%,50%,0.5);",
+		":root>body>.chipC>.chip>.unit>.main"                : "¥ta:center;¥p:2px;",
+		":root>body>.chipC>.chip>.unit>.main>.typeS"         : "¥fs:18px;¥fw:900;¥c:hsla(0,0%,100%,1);line-height:1.2em;",
+		":root>body>.chipC>.chip>.unit>.main>.nameInformalS" : "¥fs:9px;¥c:hsla(0,0%, 80%,1);line-height:1.2em;",
+		":root>body>.chipC>.chip>.import"                    : "",
+		":root>body>.chipC>.chip>.import>.txt"               : "¥ta:right;direction:rtl;",
+		":root>body>.chipC>.chip>.import>.txt::before"       : "content:'■■■ ';¥mr:-1px;letter-spacing:-0.23em;",
+		":root>body>.chipC>.chip>.export"                    : "",
+		":root>body>.chipC>.chip>.export>.txt"               : "¥ta:left;direction:ltr;",
+		":root>body>.chipC>.chip>.export>.txt::before"       : "content:'■■ ';¥ml:-1px;letter-spacing:-0.2em;",
+		
+		":root>body>.main"                                   : "¥:absolute;¥:NW;¥s:1000‰;",
+		":root>body>.control"                                : "¥:absolute;¥:NW;",
+		
+		".button" : "¥:inline-block;border:1px solid hsla("+hue360N+",100%,50%,1);",
+	}));
+	
+	p.g = anipnt.genG({
+		elCanvas  : µ.qd(":root>body>canvas.main"),
+		mousemove : function(){p.mousemove.apply(p,arguments);} ,
+		mousedown : function(){p.mousedown.apply(p,arguments);} ,
+		mouseup   : function(){p.mouseup  .apply(p,arguments);} ,
+		opt       : {
+			colorBackgroundE : [0,0,0,1]          ,
+			colorBorderE     : [0,0,1,1]          ,
+			colorTextE       : [0,0,1,1]          ,
+			fontSizeN        :                 16 ,
+			heightN          : window.innerHeight ,
+			widthN           : window.innerWidth  ,
+		},
+	}).g;
+	
+	await ["1","2","3","4","5","6","7","8","9","11","12","13","14","15","16","17","18","19","20","21","22"].forEachAsyncOrdered(async typeS=>{
+		await µ.loadScript(typeS+".js");
+		var instance = moonlight.bin[typeS]();
+		p.chipEO[typeS] = {typeS,nameInformalS:instance.nameInformalS,importEO:instance.importEO,exportEO:instance.exportEO};
+	});
+	
+	var gapN  = 2;
+	//....
+	var xBseN = 4;
+	var yBseN = 4;
+	p.chipPlace(18,{x:xBseN+((p.chipWidthN+gapN)*0),y:yBseN});
+	p.chipPlace(14,{x:xBseN+((p.chipWidthN+gapN)*1),y:yBseN});
+	p.chipPlace(19,{x:xBseN+((p.chipWidthN+gapN)*2),y:yBseN});
+	p.chipPlace(17,{x:xBseN+((p.chipWidthN+gapN)*3),y:yBseN});
+	p.chipPlace( 9,{x:xBseN+((p.chipWidthN+gapN)*4),y:yBseN});
+	var xBseN = 4;
+	var yBseN = 7;
+	p.chipPlace(16,{x:xBseN+((p.chipWidthN+gapN)*0),y:yBseN});
+	p.render();
+	
+	//------------------------------------------------------------------------------------------------------------------------
+	// Game-Frame's Local Chart Loader
+	// Game-Frame's URL Chart Loader
+	// [manual] -> |M18| -> |M14| -> |M19| -> |M17| -> |M9|
+	// [manual] -> |M16| ----------> |   |
+	//........................................................................................................................
+	
+	
+	// TESTING GROUNDS
+	//ll(p.wireDecompose({pnt0V:{x:15,y:15},pnt1V:{x:15,y:20}}));
+});
+</script>
+</head>
+<body></body>
+</html>

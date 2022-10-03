@@ -1,0 +1,811 @@
+<!doctype html>
+<html>
+<head>
+<title>/9/</title>
+<meta charset="UTF-8">
+<link href="image/favicon.png" rel="icon" type="image/png">
+
+<!-- By default, iOS might do some weird scaling for the page. -->
+<meta name="viewport" content="width=device-width,user-scalable=yes,initial-scale=1">
+
+<!-- By default, iOS will HTML-inject on number chains that it thinks are phone numbers. -->
+<meta name="format-detection" content="telephone=no">
+
+<!-- Libraries. -->
+<script src="shelf/local/butler.js"></script>
+<script>Ω.mainDirectory = "./";</script>
+
+<script src="shelf/local/diagram.js"></script>
+<script src="shelf/local/moonlight/main.js"></script>
+<script src="shelf/local/prf.js"></script>
+<script src="shelf/local/side-index.js"></script>
+<script src="shelf/local/sigma.js"></script>
+
+<script>
+
+p.crtSve_trgZ = U;
+p.act = {
+	esc : function(){
+		p.clkSetZ = π.signalFlip(p.clkSetZ);
+		var curT = π.clcCurT();
+		moonlight.import(moonlight.get("Game Frame Preference Gate","main.js").ID,{
+			"ancT"       : curT                     ,
+			"ancU"       : π.clcClkCurU("gfm",curT) ,
+			"clkSetZ"    : p.clkSetZ                ,
+			"velClkBseN" :                        0 ,});
+		p.shtAsr("0",F);
+		p.shtAsr("1",T);
+		p.shtAsr("2",F);},
+	dnl : function(){
+		p.crtSve_trgZ = π.signalFlip(p.crtSve_trgZ);
+		moonlight.import(moonlight.get("FtB9 Gate 0","main.js").ID,{
+			"crtSve_trgZ" : p.crtSve_trgZ,});},
+};
+
+//// Matrix generation for color preferences.
+//// [
+////   [                                                                                                                      ],
+////   [[0/1,0,0.5,0.85]                                                                                                      ],
+////   [[0/2,0,0.5,0.85],[1/2,0,0.5,0.85]                                                                                     ],
+////   [[0/3,0,0.5,0.85],[1/3,0,0.5,0.85],[2/3,0,0.5,0.85]                                                                    ],
+////   [[0/4,0,0.5,0.85],[1/4,0,0.5,0.85],[2/4,0,0.5,0.85],[3/4,0,0.5,0.85]                                                   ],
+////   [[0/5,0,0.5,0.85],[1/5,0,0.5,0.85],[2/5,0,0.5,0.85],[3/5,0,0.5,0.85],[4/5,0,0.5,0.85]                                  ],
+////   [[0/6,0,0.5,0.85],[1/6,0,0.5,0.85],[2/6,0,0.5,0.85],[3/6,0,0.5,0.85],[4/6,0,0.5,0.85],[5/6,0,0.5,0.85]                 ],
+////   [[0/7,0,0.5,0.85],[1/7,0,0.5,0.85],[2/7,0,0.5,0.85],[3/7,0,0.5,0.85],[4/7,0,0.5,0.85],[5/7,0,0.5,0.85],[6/7,0,0.5,0.85]],];
+//p.genMtx = function(fxn,lneC){
+//	return (new Array(lneC+1)).map((_,c)=>(new Array(c)).map((_,n)=>fxn(n,c)));};
+
+// Circuit callbacks.
+
+// Circuit callback for when audio is ready (and every time there's progress).
+p.audTracer = U;
+p.audLodStaFxn = function(tracer,lodF,lodBC){
+	if (tracer === U){return;}
+	if (tracer !== this.lodTracer){return;}
+	//llc(0.4,"audLodStaFxn(" + tracer + "," + lodF + "," + lodBC + ")");
+	// Display download progress.
+	if (lodF === T){
+		this.audTracer = tracer;
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='0']>.loading-progress").textContent = "";}
+	else{
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='0']>.loading-progress").textContent = π.byteCToFancy(lodBC);}
+	
+	// Whichever checks both.
+	if (this.audTracer === tracer && this.crtTracer === tracer){
+		p.clkSetZ = π.signalFlip(p.clkSetZ);
+		moonlight.import(moonlight.get("Game Frame Preference Gate","main.js").ID,{
+			"ancT"       : π.clcCurT()         ,
+			//"ancU"       :                  -2 , // Already set earlier.
+			"clkSetZ"    : p.clkSetZ           ,
+			"velClkBseN" :                   1 ,});}
+	;};
+
+// Circuit callback for when chart is parsed.
+p.crtTracer = U;
+p.crtLodFxn = function(tracer){
+	if (tracer === U){return;}
+	if (tracer !== this.lodTracer){return;}
+	//llc(0.4,"crtLodFxn(" + tracer + ");");
+	this.crtTracer = tracer;
+	
+	// Whichever checks both.
+	if (this.audTracer === tracer && this.crtTracer === tracer){
+		p.clkSetZ = π.signalFlip(p.clkSetZ);
+		moonlight.import(moonlight.get("Game Frame Preference Gate","main.js").ID,{
+			"ancT"       : π.clcCurT()         ,
+			//"ancU"       :                  -2 , // Already set earlier.
+			"clkSetZ"    : p.clkSetZ           ,
+			"velClkBseN" :                   1 ,});}
+	;};
+
+//----
+
+// REMEMBER
+// [!] Circuit chips apparently need to have unique names at the moment [23 May 2020].
+
+// Put state information here so previous user actions can be remembered for later triggers.
+p.mem = {
+	fcsCrtBinE : U, // Focused Chart.
+};
+
+// Sheet Assert.
+p.shtAsr = function(nmeS,staF){
+	var elm = µ.qd(":root>body>.sheet-c>.sheet[data-slot='"+nmeS+"']");if (elm === N){return U;}
+	elm.classList[(staF===T)?("remove"):("add"   )]("_low");
+	elm.classList[(staF===T)?("add"   ):("remove")]("_hgh");
+	
+	moonlight.import(moonlight.get("FtB9 Gate 0","main.js").ID,{
+		"shtF_0" : p.shtAsk("0"),
+		"shtF_1" : p.shtAsk("1"),
+		"shtF_2" : p.shtAsk("2"),});
+	
+	;};
+// Sheet Ask.
+p.shtAsk = function(nmeS){
+	var elm = µ.qd(":root>body>.sheet-c>.sheet[data-slot='"+nmeS+"']");if (elm === N){return U;}
+	return elm.classList.contains("_hgh");};
+
+// Tray Assert.
+p.traAsr = function(qryS,staF){
+	var traElm_0 = µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.sub-tal>.tra"+qryS);
+	var traElm_1 = µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.tal>.tra"+qryS);
+	
+	// Feature: will flip if desire not specified.
+	if (staF === U){
+		staF = traElm_0.classList.contains("_low");}
+	
+	µ.qdA(":root>body>.sheet-c>.sheet[data-slot='1']>.sub-tal>.tra").forEach(elm=>{
+		if ((elm === traElm_0) && (staF === T)){
+			elm.classList.remove("_low");
+			elm.classList.add   ("_hgh");}
+		else{
+			elm.classList.add   ("_low");
+			elm.classList.remove("_hgh");}});
+	
+	µ.qdA(":root>body>.sheet-c>.sheet[data-slot='1']>.tal>.tra").forEach(elm=>{
+		if ((elm === traElm_1) && (staF === T)){
+			elm.classList.remove("low");
+			elm.classList.add   ("hgh");}
+		else{
+			elm.classList.add   ("low");
+			elm.classList.remove("hgh");}});};
+
+// Chart Focus.
+p.crtFcsFxn = async function(binE){
+	// Show information. Prompt to press a certain key to play.
+	{
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ico").style.backgroundImage = ((binE.datAltM.srcImgS!==U) ? ("url('"+binE.datAltM.srcImgS+"')") : ("none"));
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ttl").textContent  = binE.datAltM.ttlS;
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.dur").textContent  = binE.datAltM.durS + " ◷";
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.nps").textContent  = str(binE.datAltM.dfcN) + " ⠴";
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.lne").textContent  = str(binE.datAltM.lneC) + " ◨";
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ori").textContent  = binE.datAltM.oriS;
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ctr").textContent  = binE.datAltM.ctrS;
+		µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.inf").textContent  = binE.datAltM.infS;
+	}
+};
+
+// Chart Preload (used to seed the Reset feature).
+p.crtPldFxn = async function(binE){
+	this.mem.fcsCrtBinE = binE;};
+
+// Chart Load.
+p.rstZ    = U;
+p.clkSetZ = U;
+p.crtLod = async function(){
+	var fcsCrtBinE;{
+		if (this.mem.fcsCrtBinE === U){return F;}
+		fcsCrtBinE = this.mem.fcsCrtBinE;}
+	var {staF,adrS:adrAudS} = await sigma.resolveAddress({adrM:jjj([fcsCrtBinE,"datAltM","urlAudS"]),urlSlfS:fcsCrtBinE.urlS});if (staF === F){lle("σ.resolveAddress error");return;}
+	var {staF,adrS:adrTxtS} = await sigma.resolveAddress({adrM:jjj([fcsCrtBinE,"datAltM","urlTxtS"]),urlSlfS:fcsCrtBinE.urlS});if (staF === F){lle("σ.resolveAddress error");return;}
+	
+	p.shtAsr("0",T);
+	p.shtAsr("1",F);
+	p.shtAsr("2",F);
+	
+	this.lodTracer = moonlight.genTracer();
+	
+	// !!! Shouldn't these have more "official" hooks into moonlight?
+	
+	p.clkSetZ = π.signalFlip(p.clkSetZ);
+	moonlight.import(moonlight.get("Game Frame Preference Gate","main.js").ID,{
+		"ancT"       : π.clcCurT()       ,
+		"ancU"       :                -2 ,
+		"clkSetZ"    : p.clkSetZ         ,
+		"velClkBseN" :                 0 ,});
+	
+	p.rstZ = π.signalFlip(p.rstZ);
+	moonlight.import(moonlight.get("FtB9 Gate 0","main.js").ID,{
+		"rstZ" : p.rstZ,});
+	
+	//....
+	
+	//ll(moonlight.aliveF,laneC,moonlight.get("1x Out Lane Count","main.js").dat);
+	
+	moonlight.import(moonlight.get("FtB9 Gate 1","main.js").ID,{
+		"tracer"     : this.lodTracer,
+		//....
+		"datAltFxnS" : jjjc([fcsCrtBinE,"datAltM","audDcdFxnS"],""),
+		"urlAudS"    : sigma.cnvUrlFxn(adrAudS),});
+	
+	moonlight.import(moonlight.get("FtB9 Gate 2","main.js").ID,{
+		"tracer"  : this.lodTracer,
+		//....
+		//"lneC"    : jjjc([fcsCrtBinE,"datAltM","lneC"],0), // Decided to go back to auto-detect-ish.
+		"urlTxtS" : sigma.cnvUrlFxn(adrTxtS),});
+	
+	// We wait for your tracer callback to start the chart.
+	;
+	
+	;};
+
+// Copy-pasted from [index.html].
+p.srtWchN   = 5;
+p.srtDirTri = 1;
+p.renderTable_CACHE    = U ;
+p.renderTable_CACHE_10 = U ;
+p.renderTable = async function(i={}){i = π.cc(i);var o = {staF:F};
+	π.p(i,{});
+	π.p(o,{});
+	if (p.shtAsk("1") === F){return;} // No point in running a re-display if this isn't being viewed.
+	(function(that){
+		return new Promise(async (resolveFxn,rejectFxn)=>{
+			
+			// !!! No longer works due to sorting feature.
+			//// Cache check for whether any input data has changed.
+			//var _0S = JSON.stringify(jjjc([sigma,"flat","chart"],{}));
+			//var _1S = p.renderTable_CACHE_10;
+			//if (_0S === _1S){
+			//	o.staF = T;
+			//	resolveFxn(o);
+			//	return;}
+			//p.renderTable_CACHE_10 = _0S;
+			
+			var rowEA = await jjjc([sigma,"flat","chart"],{}).mapVAsync(async (crtRowE,rowUrlS)=>{
+				var typS = "crt";
+				var binE = crtRowE;
+				return {
+					leftmousedown : (function(that,binE){return async function(){
+						await that.crtPldFxn(binE);
+						await that.crtLod();
+						};})(that,binE),
+					mouseenter : (function(that,binE){return async function(){
+						await that.crtFcsFxn(binE);
+						;};})(that,binE),
+					//leftmousedown_lck : (function(that,binE){return async function(evt){
+					//	await that.crtFcsFxn(binE);
+					//	evt.stopPropagation();
+					//	};})(that,binE),
+					cellEA : [
+						{wchS : "img",srcImgS : str(jjjcl([binE.datAltM,"srcImgS"],"",""))     ,srtM:jjjcl([binE.datAltM,"srcImgS"],"","")},
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"ttlS"   ],"",""))     ,srtM:jjjcl([binE.datAltM,"ttlS"   ],"","")},
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"durS"   ],"",""))+" ◷",srtM:jjjcl([binE.datAltM,"durN"   ], 0, 0)},
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"dfcN"   ], 0,""))+" ⠴",srtM:jjjcl([binE.datAltM,"dfcN"   ], 0, 0)}, //⠴⣼⠾⣠⣾
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"lneC"   ], 0,""))+" ◨",srtM:jjjcl([binE.datAltM,"lneC"   ], 0, 0)}, //◨◧
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"oriS"   ],"",""))     ,srtM:jjjcl([binE.datAltM,"oriS"   ],"","")},
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"ctrS"   ],"",""))     ,srtM:jjjcl([binE.datAltM,"ctrS"   ],"","")},
+						{wchS : "txt",dspS    : str(jjjcl([binE.datAltM,"locS"   ],"",""))     ,srtM:jjjcl([binE.datAltM,"locS"   ],"","")},],
+					};});
+			rowEA.sort((rowE_0,rowE_1)=>{
+				if (isN(rowE_0.cellEA[p.srtWchN].srtM) === T){var _0 = rowE_0.cellEA[p.srtWchN].srtM - rowE_1.cellEA[p.srtWchN].srtM             ;if (p.srtDirTri < 0){_0 *= -1;}if (_0 !== 0){return _0;}}
+				else                                         {var _0 = rowE_0.cellEA[p.srtWchN].srtM.localeCompare(rowE_1.cellEA[p.srtWchN].srtM);if (p.srtDirTri < 0){_0 *= -1;}if (_0 !== 0){return _0;}}
+				var _1 = rowE_0.cellEA[        5].srtM.localeCompare(rowE_1.cellEA[        5].srtM);                               if (_1 !== 0){return _1;}
+				var _2 = rowE_0.cellEA[        1].srtM.localeCompare(rowE_1.cellEA[        1].srtM);                               if (_2 !== 0){return _2;}
+				return 0;
+			});
+			
+			// "colEA" : [{dspS:"icon",stk:T},{dspS:"title",stk:F},{dspS:"origin",stk:F},{dspS:"creator",stk:F},{dspS:"charter",stk:F}],});
+			//ll("rowEA",rowEA);
+			µ.rr(µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-c>.hed"),µ.m([[
+				[".row",[
+					[".cell",""],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 1){p.srtDirTri *= -1;}else{p.srtWchN = 1;p.srtDirTri = 1;}await p.renderTable();}},"title"],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 2){p.srtDirTri *= -1;}else{p.srtWchN = 2;p.srtDirTri = 1;}await p.renderTable();}},"time"],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 3){p.srtDirTri *= -1;}else{p.srtWchN = 3;p.srtDirTri = 1;}await p.renderTable();}},"difficulty"],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 4){p.srtDirTri *= -1;}else{p.srtWchN = 4;p.srtDirTri = 1;}await p.renderTable();}},"keys"],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 5){p.srtDirTri *= -1;}else{p.srtWchN = 5;p.srtDirTri = 1;}await p.renderTable();}},"origin"],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 6){p.srtDirTri *= -1;}else{p.srtWchN = 6;p.srtDirTri = 1;}await p.renderTable();}},"charter"],
+					[".cell",{leftmousedown:async function(evt){evt.preventDefault();if (p.srtWchN === 7){p.srtDirTri *= -1;}else{p.srtWchN = 7;p.srtDirTri = 1;}await p.renderTable();}},"location"],
+				]],
+			]]));
+			
+			// Cache work-around until we solve root-replace again.
+			var cache = [];
+			rowEA.forEach(rowE=>{
+				cache.push(π.cc(rowE.cellEA));});
+			if (π.ooe(cache,that.renderTable_CACHE) === F){
+				µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-c>.bdy").innerHTML = ""; // For whatever reason, sorting click handlers and root-replace do not get along.
+				µ.rr(µ.qd(":root>body>.sheet-c>.sheet[data-slot='1']>.chart-c>.bdy"),µ.m([rowEA.map(rowE=>{
+					return [".row",{leftmousedown:rowE.leftmousedown,mouseenter:rowE.mouseenter},rowE.cellEA.map(cellE=>{
+						switch (cellE.wchS){default : {;}
+							break;case "img" : {
+								return ["img.cell",{d:{src:cellE.srcImgS},error:function(){this.style.visibility="hidden";}}];}
+							break;case "txt" : {
+								return [".cell",cellE.dspS];};}
+					})];
+				})]));}
+			that.renderTable_CACHE = cache;
+			
+			//moonlight.import(moonlight.get("chart-collection-table").ID,{"rowEA" : rowEA});
+			o.staF = T;
+			resolveFxn(o);
+			return;});
+		;})(this);
+};
+
+µ.onLoad(0,async ()=>{
+	
+	// Create clocks.
+	Ω.clk.gfm = {ancU:0,ancT:π.clcCurT(),velN:0};
+	
+	// Load URL parameters.
+	{
+		var urlM = new URL(window.location.href);
+		
+		var urlIdxS = urlM.searchParams.get("idx");
+		if (nun(urlIdxS)){
+			p.urlIdxS = urlIdxS;}
+		else{
+			p.urlIdxS = "https://raw.githubusercontent.com/sliceofcake/ftb9-db/main/db/ftb9"; //"https://feelthebeats.se/kern/sigma/db/FtB9";
+			;}
+		ll("index : ["+p.urlIdxS+"]");
+		
+		var urlSdeIdxS = urlM.searchParams.get("sde-idx");
+		if (nun(urlSdeIdxS)){
+			p.urlSdeIdxS = urlSdeIdxS;}
+		else{
+			p.urlSdeIdxS = "https://raw.githubusercontent.com/sliceofcake/ftb9-db/main/db/side-index";// "https://feelthebeats.se/kern/sigma/db/side-index";
+			;}
+		ll("side-index : ["+p.urlSdeIdxS+"]");
+	}
+	
+	µ.maCSS(document.head,"css-global",µ.cssCompile({
+		["*"                                                             ] : "box-sizing:border-box;¥fs:16px;line-height:1.2;transition-property:background-color,color,border-color;"
+		+                                                                    "transition-timing-function:cubic-bezier(0.22,0.61,0.36,1);transition-duration:0.6s;transition-delay:0s;"
+		+                                                                    "background-clip:padding-box;-webkit-overflow-scrolling:touch;",
+		["*:hover,*:focus,*:active"                                      ] : "transition-timing-function:linear;transition-duration:0s;transition-delay:0s;",
+		
+		["a"        ] : "¥c:inherit;text-decoration:none;",
+		["a:visited"] : "¥c:inherit;text-decoration:none;",
+		["a:focus"  ] : "¥c:inherit;text-decoration:none;",
+		["a:hover"  ] : "¥c:inherit;text-decoration:none;",
+		["a:active" ] : "¥c:inherit;text-decoration:none;",
+		
+		["input"] : "¥c:"+ç.p([0,0,1,1])+";¥bgc:"+ç.p([0,0,0,1])+";outline:none;¥bo:none;¥fs:inherit;¥pl:12px;¥ff:inherit;",
+		
+		/* The .hgh sction is copy-paste because of a limitation in CSS. */
+		["a._url                                        "    ] : "¥bs:dotted;",
+		["a._url       ,label                           "    ] : "¥:inline-block;",
+		["              label        >input             "    ] : "¥:none;",
+		["a._url       ,label        >:not(input)       "    ] : "¥s:1000‰;¥p:3px 12px;¥bw:1px;¥:hand;",
+		["a._url       ,label        >:not(input)       "+" "] : "¥c:"+ç.p([0,0,0.65,1])+";¥bgc:"+ç.p([0,0,0.00,1])+";¥bc:"+ç.p([0,0,0.65,1])+";",
+		["a._url:focus ,label        >:not(input):focus "    ] : "¥c:"+ç.p([0,0,0.65,1])+";¥bgc:"+ç.p([0,0,0.00,1])+";¥bc:"+ç.p([0,0,0.65,1])+";",
+		["a._url:hover ,label        >:not(input):hover "    ] : "¥c:"+ç.p([0,0,0.65,1])+";¥bgc:"+ç.p([0,0,0.35,1])+";¥bc:"+ç.p([0,0,0.65,1])+";",
+		["a._url:active,label        >:not(input):active"    ] : "¥c:"+ç.p([0,0,0.85,1])+";¥bgc:"+ç.p([0,0,0.35,1])+";¥bc:"+ç.p([0,0,0.85,1])+";",
+		["              label.hgh    >:not(input)       "+" "] : "¥c:"+ç.p([0,0,0.65,1])+";¥bgc:"+ç.p([0,0,0.20,1])+";¥bc:"+ç.p([0,0,0.65,1])+";",
+		["              label.hgh    >:not(input):focus "    ] : "¥c:"+ç.p([0,0,0.65,1])+";¥bgc:"+ç.p([0,0,0.20,1])+";¥bc:"+ç.p([0,0,0.65,1])+";",
+		["              label.hgh    >:not(input):hover "    ] : "¥c:"+ç.p([0,0,0.65,1])+";¥bgc:"+ç.p([0,0,0.35,1])+";¥bc:"+ç.p([0,0,0.65,1])+";",
+		["              label.hgh    >:not(input):active"    ] : "¥c:"+ç.p([0,0,0.85,1])+";¥bgc:"+ç.p([0,0,0.35,1])+";¥bc:"+ç.p([0,0,0.85,1])+";",
+		["              label.fle    >:not(input)       "    ] : "¥bs:dashed;",
+		["              label.btn    >:not(input)       "    ] : "¥bs:solid;",
+		["              label.tgl    >:not(input)       "    ] : "¥bs:solid;",
+		
+		["._low"                                                         ] : "display:none;",
+		["._hgh"                                                         ] : "display:block;",
+		["._interaction-sheet"                                           ] : "visibility:transparent;outline:none;",
+		
+		["._btn"                    ] : "¥bo:1px solid transparent;¥p:1px 3px;¥ta:center;¥:hand;"
+		+                               "¥bgc:"+ç.p([0,1,0.1,1])+";¥bc:"+ç.p([0,1,0.500,1])+";¥bsw:"+ç.p([0,0.5,0.1,1])+";",
+		["._btn:hover,._btn:focus"  ] : "¥bgc:"+ç.p([0,1,0.2,1])+";¥bc:"+ç.p([0,1,0.750,1])+";¥bsw:"+ç.p([0,0.5,0.2,1])+";",
+		["._btn:active,._btn.active"] : "¥bgc:"+ç.p([0,1,0.4,1])+";¥bc:"+ç.p([0,1,0.875,1])+";¥bsw:"+ç.p([0,0.5,0.4,1])+";",
+		["._btn.active"             ] : "transition-duration:0s;",
+		
+		[":root>body"                                                                        ] : "¥ff:Verdana,Geneva,sans-serif;¥c:hsla(0,0%,100%,1);¥bgc:hsla(0,0%,0%,1);¥o:hidden;",
+		//[":root>body>.rip-c"                                                                 ] : "¥:none;¥:absolute;¥:NW;¥w:1000‰;¥h:1000‰;justify-content:center;align-items:center;",
+		//[":root>body>.rip-c>.rip"                                                            ] : "¥c:hsla(0,0%,100%,1);¥bgc:hsla(0,0%,0%,1);¥p:12px;",
+		[":root>body>.trigger-c"                                                             ] : "¥:absolute;¥:SW;¥w:1000‰;¥h:60px ;",
+		[":root>body>.trigger-c>.trigger"                                                    ] : "                ¥w:60px ;¥h:1000‰;float:left;",
+		[":root>body>.trigger-c>.trigger"                                                +" "] : "¥:hand;",
+		[":root>body>.trigger-c>.trigger::selection"                                         ] : "¥bgc:transparent;",
+		[":root>body>.trigger-c>.trigger"                                               +"  "] : "¥bgc:"+ç.p([0,1,0.1,1])+";",
+		[":root>body>.trigger-c>.trigger:hover"                                              ] : "¥bgc:"+ç.p([0,1,0.2,1])+";",
+		[":root>body>.trigger-c>.trigger:active"                                             ] : "¥bgc:"+ç.p([0,1,0.4,1])+";",
+		[":root>body>.sheet-c"                                                               ] : "¥:absolute;¥:NW;¥w:1000‰;¥h:1000‰;",
+		[":root>body>.sheet-c>.sheet"                                                        ] : "¥:absolute;¥:NW;¥w:1000‰;¥h:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='0']"                                         ] : "¥bgc:"+ç.p([0,0,0,0.85])+";",
+		[":root>body>.sheet-c>.sheet[data-slot='1']"                                         ] : "¥bgc:"+ç.p([0,0,0,0.85])+";",
+		[":root>body>.sheet-c>.sheet[data-slot='2']"                                         ] : "¥bgc:"+ç.p([0,0,0,0.50])+";",
+		[":root>body>.sheet-c>.sheet[data-slot='0']>.game-frame"                             ] : "¥w:1000‰;¥h:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='0']>.game-frame>.cvs"                        ] : "¥:absolute;¥:NW;¥w:1000‰;¥h:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='0']>.loading-progress"                       ] : "¥:absolute;¥t:12px;¥l:12px;¥bgc:hsla(0,0%,0%,1);",
+		[":root>body>.sheet-c>.sheet[data-slot='0']>.esc"                                    ] : "¥:absolute;¥t:12px;¥l:12px;¥bgc:hsla(0,0%,0%,1);",
+		[":root>body>.sheet-c>.sheet[data-slot='0']>.dnl"                                    ] : "¥:absolute;¥b:12px;¥r:12px;¥bgc:hsla(0,0%,0%,1);",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-collection-table"                 ] : "¥w:1000‰;¥h:calc(1000‰ - 100px - 30px);",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail"                           ] : "¥:absolute;¥:W;¥b:30px;¥w:1000‰;¥h:100px;¥bgc:"+ç.p([0,0,0.5,0.2])+";",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ico"                      ] : "¥:absolute;¥t: 0px;¥l:  0px;¥w:100px              ;¥h:100px;¥bgr:no-repeat;¥bgs:contain;¥bgo:padding-box;¥bgp:center center;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ttl"                      ] : "¥:absolute;¥t: 0px;¥l:100px;¥w:calc(1000‰ - 100px);¥h: 32px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ori"                      ] : "¥:absolute;¥t:20px;¥l:100px;¥w:300px              ;¥h: 32px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.ctr"                      ] : "¥:absolute;¥t:40px;¥l:100px;¥w:200px              ;¥h: 32px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.dur"                      ] : "¥:absolute;¥t:40px;¥l:300px;¥w:100px              ;¥h: 32px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.nps"                      ] : "¥:absolute;¥t:40px;¥l:400px;¥w:100px              ;¥h: 32px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.lne"                      ] : "¥:absolute;¥t:40px;¥l:500px;¥w:100px              ;¥h: 32px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.chart-detail>.inf"                      ] : "¥:absolute;¥t:60px;¥l:100px;¥w:calc(1000‰ - 100px);¥h: 40px;white-space:pre-wrap;overflow:auto;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.tal"                                    ] : "¥:absolute;¥:SW;¥w:1000‰;¥h:30px;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.tal>*"                                  ] : "¥:inline-block;¥w:auto;¥h:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.sub-tal"                                ] : "¥:absolute;¥:W;¥b:30px;¥w:1000‰;¥h:auto;",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.sub-tal>.tra"                           ] : "¥:absolute;¥:SW;¥w:1000‰;¥h:30px;¥bgc:"+ç.p([0,0,0,0.85])+";¥bw:1px;¥bs:solid none;¥bc:"+ç.p([0,0,0.65,1])+";",
+		[":root>body>.sheet-c>.sheet[data-slot='1']>.sub-tal>.tra>*"                         ] : "¥:inline-block;¥w:auto;¥h:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section"                                ] : "¥w:auto;¥h:100px;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>*"                              ] : "¥:inline-block;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.key-binding"                   ] : "¥:relative;¥s:60px;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.key-binding>.interaction-sheet"] : "¥:absolute;¥:NW;¥s:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.key-binding>.light-bulb"       ] : "¥:absolute;¥:NW;¥s:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.key-binding>.text"             ] : "¥:absolute;¥:NW;¥s:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.slider"                        ] : "¥:relative;¥w:90px;¥h:90px;¥m:12px;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.slider>.interaction-sheet"     ] : "¥:absolute;¥:NW;¥s:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.slider>.display"               ] : "¥:absolute;¥:NW;¥s:1000‰;",
+		[":root>body>.sheet-c>.sheet[data-slot='2']>.section>.slider>.icon"                  ] : "¥:absolute;¥:NW;¥s:700‰;¥m:150‰;pointer-events:none;",
+		
+		[":root>body>.sheet-c>.sheet>.hed"              ] : "¥:absolute;¥:NW;¥w:1000‰;¥h:60px;¥bb:1px solid "+ç.p([0,0,0.5,1])+";",
+		[":root>body>.sheet-c>.sheet>.hed>.search"      ] : "¥:absolute;¥:NW;¥s:1000‰;",
+		
+		[":root>body>.sheet-c>.sheet>.chart-c"             ] : "¥:absolute;¥:W;¥t:60px;¥w:1000‰;¥h:calc(1000‰ - 60px - 100px - 30px);",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row"      ] : "¥w:1000‰;¥o:hidden;¥bb:1px solid "+ç.p([0,0,0.2,1])+";¥:hand;¥bgc:"+ç.p([0,0,0,1])+";¥o:hidden;white-space:nowrap;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row:nth-child(2n)"] : "¥bgc:"+ç.p([0,0,0.1,1])+";",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row:hover"] : "¥bgc:"+ç.p([0,0,0.2,1])+";",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell"] : "¥:inline-block;vertical-align:top;¥hall:26px;¥o:hidden;"
+		+                                                      "¥p:1px 6px;line-height:26px;¥fs:13px;white-space:nowrap;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(1)"] : "¥wall:26px;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(2)"] : "¥wall:calc(1000‰ - 26px - 60px - 70px - 50px - 260px - 180px - 120px);",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(3)"] : "¥wall:60px;¥ta:right;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(4)"] : "¥wall:70px;¥ta:right;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(5)"] : "¥wall:50px;¥ta:right;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(6)"] : "¥wall:260px;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(7)"] : "¥wall:180px;",
+		[":root>body>.sheet-c>.sheet>.chart-c>*>.row>.cell:nth-child(8)"] : "¥wall:120px;",
+		[":root>body>.sheet-c>.sheet>.chart-c>.bdy>.row>.cell:nth-child(1)"] : "¥p:0px;",
+		[":root>body>.sheet-c>.sheet>.chart-c>.hed"       ] : "¥:absolute;¥:NW;¥w:1000‰;",
+		[":root>body>.sheet-c>.sheet>.chart-c>.bdy"       ] : "¥:absolute;¥:W;¥t:calc(26px + 1px);¥h:calc(100% - 26px - 1px);¥w:1000‰;overflow:auto;",
+		[":root>body>.sheet-c>.sheet>.chart-c>.tal"       ] : "¥:absolute;¥:SW;¥w:1000‰;",
+		
+		[".cursor-hide"] : "cursor:none;",
+	}));
+	
+	µ.rr(document.body,µ.m([[
+		[".sheet-c",[
+			[".sheet[data-slot='0']",[
+				[".game-frame",[
+					["canvas.cvs"],
+				]],
+				[".esc",{leftmousedown:(function(that){return function(){that.act.esc();};})(p)},"[esc]"],
+				[".loading-progress"],
+				[".dnl",{leftmousedown:(function(that){return function(){that.act.dnl();};})(p)},"[dnl]"],
+			]],
+			[".sheet[data-slot='1']",[
+				[".hed",[
+					["input.search",{d:{placeholder:"search terms (not implemented yet)",autofocus:""}}],
+				]],
+				[".chart-c",[
+					[".hed"],
+					[".bdy"],
+					[".tal"],
+				]],
+				//[".chart-collection-table"],
+				[".chart-detail",[
+					[".ico",{error:function(){this.style.visibility="hidden";}}],
+					[".ttl"],
+					[".dur"],
+					[".nps"],
+					[".lne"],
+					[".ori"],
+					[".ctr"],
+					[".inf"],
+				]],
+				[".sub-tal",[
+					[".tra.tst._low",[
+						["label.fle.aud",{input:function(){µ.qd(this,":not(input)").innerHTML = "Audio : " + jjjcl([µ.qd(this,"input"),"files",0,"name"],"","(Click/Drag)");}},[
+							["input[type='file']"],
+							["","Audio : (Click)"],
+						]],
+						["label.fle.nte",{input:function(){µ.qd(this,":not(input)").innerHTML = "Notes : " + jjjcl([µ.qd(this,"input"),"files",0,"name"],"","(Click/Drag)");}},[
+							["input[type='file']"],
+							["","Notes : (Click)"],
+						]],
+						["label.btn.lod",{leftmousedown:async function(){
+							var fleAudR = µ.qud(this,".tra","label.fle.aud>input").files[0];if (fleAudR === U){return U;}
+							var urlAudS = ((fleAudR !== U) ? (URL.createObjectURL(fleAudR)) : (U));
+							
+							var fleNteR = µ.qud(this,".tra","label.fle.nte>input").files[0];if (fleNteR === U){return U;}
+							var urlNteS = ((fleNteR !== U) ? (URL.createObjectURL(fleNteR)) : (U));
+							
+							await p.crtPldFxn({
+								datAltM:{
+									urlTxtS    : urlNteS,
+									urlAudS    : urlAudS,
+									audDcdFxnS : U,},
+								urlS:U,});
+							await p.crtLod();
+							
+							;}},[
+							["input[type='button']"],
+							["","Load Offline"],
+						]],
+					]],
+					[".tra.bln._low",π.a(1,11).map(lneC=>
+						["label.btn.lod",{leftmousedown:async function(){π.saveTextAsFile("ftb9-blank-"+str(lneC)+"k-chart","###FILE ALREADY PARSED###\n"+str(lneC)+" Key");}},[
+							["input[type='button']"],
+							["",str(lneC)+"K"],
+						]],
+					)],
+				]],
+				[".tal",[
+					["a._url",{d:{target:"_blank",href:"./settings/index.html"       }},"Settings"],
+					["a._url",{d:{target:"_blank",href:"./help/semi-sigma/index.html"}},"Chart Manager"],
+					["label.tgl.tra.tst",{leftmousedown:async function(){p.traAsr(".tst");}},[
+						["input[type='button']"],
+						["","Test Offline"],
+					]],
+					["label.tgl.tra.bln",{leftmousedown:async function(){p.traAsr(".bln");}},[
+						["input[type='button']"],
+						["","Download Blank Chart"],
+					]],
+				]],
+			]],
+			[".sheet[data-slot='2']"],
+		]],
+		//[".trigger-c",[
+		//	[".trigger[data-slot='2']","opt"],
+		//]],
+		//[".rip-c"],
+	]]));
+	
+	// !!! HERE !!!
+	//
+	// [in pending changelog]
+	// - hide missing-image icons
+	// - show finer resolution for MiB counter when only one digit [previously]
+	// - [bug] resize observer no longer handling game-frame resize recalc
+	// - semi-sigma: "charter" field. hook up "charter" field to auto assign from uploader
+	// - semi-sigma: "download github data zip" button
+	// - add "info" field to github tool, and hook it back up in interface
+	// - click chart line to play, (no lock UI option right now), reuse P key as Reset function and bind to O, make preference as well
+	// - [charter] jump back to home position without force reloading (important for offline mode) | also to end, and 0123456789
+	// - click header fields to sort (very basic, will eventually be better when search is implemented)
+	// - improve graphics
+	//   L> score is incorrect calc and visually unappealing
+	//   L> display: note offset, volume, composer mode flag
+	//   L> move around info displays to sides of game frame
+	// - hide the cursor when inactive and in the gameplay screen
+	// - [bug] bpm creation key doesn't work (programmer mistake in time-sync change last rev)
+	// - tweaked default settings to make dividers harder to see and lane light-ups easier to see
+	//
+	// [to-do, next version]
+	// - add touch support for iPad
+	//
+	// [to-do, further out]
+	// - log some intentionally malicious rows to always be included in order to verify sigma fault-tolerance
+	// - unify chart cleansing (M43,et al.),(M85)
+	// - Stop using nmeS as an important, unique identifier in [diagram.js]. It makes naming collision a pain.
+	// - The math for calculating gameframe y positions probably still assumed full-height zones, particularly the precl functions.
+	// - Poke lenpai for feedback on charter tool.
+	// - len> upload chart within the charter.
+	// - eqFxn is a relic mess [M104], Pumping blocks, for example.
+	// - Determine whether/how any FtB4 Museum charts can be uploaded, now with the inverse encoding.
+	// - deal with re-runs where new drags overlap with old drags.
+	// - changing src on an img NOT YET IN THE DOM still causes Chrome to load an image from the network. overhaul root-replace to do faked DOM purely in JS.
+	//   L> - At least look at [[[DocumentFragment]]] just in case it's useful somehow.
+	// - Game Scroll Engine : "Independent Temporal Full Table" (100Hz lookup table of all note parameters, per note)
+	// - [charter] split waveform by frequency bands, color coded overlapping ([[[getFloatFrequencyData]]] [82.js])
+	//   L> [[[getFloatFrequencyData]]] is only callable in real-time, making it unreliable and worthless in the charter.
+	// - search feature, with better control over sorting details
+	// - co-op multiplayer
+	//
+	// [honestly doesn't matter much on-the-surface]
+	// - Use M78 Resize Observer on M64 and M65 in order to modularize them.
+	//
+	// [evasive bugs]
+	// - [BUG] timing still not synced all the time between lanes (got to happen with FtB9_13.zip with len's prf, lane[2] got perma stuck one frame late even with new chart selection. refresh fixed).
+	//   L> maybe it's the arbitrary ordering of uniani registrations?
+	//
+	// [clearly never going to get done]
+	// - garbage collection batches will sometimes cause lag in gameframe
+	//
+	//....
+	//
+	// Toolbox:
+	// L> len: (DL speed 150kBps, yes, "Bytes")
+	// L> moonlight.get("Game Frame Lane Internal|lane.js 0").dat;
+	// L> [[[p.genSdeIdxFxn()]]] (side-index generator)
+	//
+	//....
+	
+	// Format game-frame.
+	// Pass-through the ContentRange HTTP headers in the proxy to facilitate audio seeking.
+	
+	//------------------------------------------------------------------------------------------------------------------------
+	
+	// Moonlight.
+	
+	//
+	await p.dgm.bldFxn("diagram/main.js","main.js");
+	uniani.moveToTop(moonlight.get("Full-Screen Canvas Manager","main.js").toString());
+	
+	//------------------------------------------------------------------------------------------------------------------------
+	
+	var o = {
+		// Neutral.
+		"audLodStaFxn"    : (function(p){return function(...m){p.audLodStaFxn(...m);};})(p),
+		"crtLodFxn"       : (function(p){return function(...m){p.crtLodFxn(...m);};})(p),
+		"cvsWrpElm"       : µ.qd(":root>body>.sheet-c>.sheet[data-slot='0']>.game-frame"),
+		"cvsElm"          : µ.qd(":root>body>.sheet-c>.sheet[data-slot='0']>.game-frame>.cvs"),
+	};
+	moonlight.import(moonlight.get("FtB9 Gate 0","main.js").ID,o);
+		
+	moonlight.import(moonlight.get("Game Frame Preference Gate","main.js").ID,{
+		//"ancT"       : π.clcCurT()    , // ???
+		//"ancU"       :              0 , // ???
+		"velClkBseN" :              0 ,});
+	
+	p.prfAsr = function(){
+		p.prfFilFxn();
+		p.prfRcvFxn();
+		
+		// Hookups.
+		var o = {
+			
+			// Preferences.
+			"aspRtoLneN"               : p.prf[ "7"],
+			"divWdtPrt"                : p.prf[ "4"],
+			"keyCpsBpmDecBigS"         : p.prf["23"],
+			"keyCpsBpmDecS"            : p.prf["24"],
+			"keyCpsBpmHghS"            : p.prf["25"],
+			"keyCpsBpmIncBigS"         : p.prf["26"],
+			"keyCpsBpmIncS"            : p.prf["27"],
+			"keyCpsBpmLowS"            : p.prf["28"],
+			"keyCpsHedSA"              : p.prf["29"],
+			"keyCpsHghS"               : p.prf["51"],
+			"keyCpsLowS"               : p.prf["52"],
+			"keyCpsTalSA"              : p.prf["30"],
+			"keyPauS"                  : p.prf["32"],
+			"keyPlyS"                  : p.prf["31"],
+			"keyScrBarDecS"            : p.prf["34"],
+			"keyScrBarIncS"            : p.prf["33"],
+			"keyScrHedS"               : p.prf["251"],
+			"keyScrMrkS_0"             : p.prf["252"],
+			"keyScrMrkS_1"             : p.prf["253"],
+			"keyScrMrkS_2"             : p.prf["254"],
+			"keyScrMrkS_3"             : p.prf["255"],
+			"keyScrMrkS_4"             : p.prf["256"],
+			"keyScrMrkS_5"             : p.prf["257"],
+			"keyScrMrkS_6"             : p.prf["258"],
+			"keyScrMrkS_7"             : p.prf["262"],
+			"keyScrMrkS_8"             : p.prf["263"],
+			"keyScrMrkS_9"             : p.prf["264"],
+			"keyScrTalS"               : p.prf["265"],
+			"keyScrSnpDecS"            : p.prf["36"],
+			"keyScrSnpIncS"            : p.prf["35"],
+			"keySnpDecS"               : p.prf["38"],
+			"keySnpIncS"               : p.prf["37"],
+			"keyVelClkDecS"            : p.prf["54"],
+			"keyVelClkIncS"            : p.prf["53"],
+			"keyVelScrDecS"            : p.prf["58"],
+			"keyVelScrIncS"            : p.prf["57"],
+			"keyVlmDecS"               : p.prf["56"],
+			"keyVlmIncS"               : p.prf["55"],
+			"lneCxkeySAA"              : [U,p.prf["41"],p.prf["42"],p.prf["43"],p.prf["44"],p.prf["45"],p.prf["46"],p.prf[ "0"],p.prf["47"],p.prf["48"],p.prf["49"],p.prf["50"]],
+			"lneCxlneNxdivHghCorAA"    : [U,p.prf["84"],p.prf["103"],p.prf["122"],p.prf["141"],p.prf["160"],p.prf["179"],p.prf[ "16"],p.prf["198"],p.prf[ "66"],p.prf["217"],p.prf["236"]],
+			"lneCxlneNxdivMdmCorAA"    : [U,p.prf["83"],p.prf["102"],p.prf["121"],p.prf["140"],p.prf["159"],p.prf["178"],p.prf[ "15"],p.prf["197"],p.prf[ "65"],p.prf["216"],p.prf["235"]],
+			"lneCxlneNxdrgHghCorAA"    : [U,p.prf["82"],p.prf["101"],p.prf["120"],p.prf["139"],p.prf["158"],p.prf["177"],p.prf[ "14"],p.prf["196"],p.prf[ "64"],p.prf["215"],p.prf["234"]],
+			"lneCxlneNxdrgLowCorAA"    : [U,p.prf["80"],p.prf[ "99"],p.prf["118"],p.prf["137"],p.prf["156"],p.prf["175"],p.prf[ "12"],p.prf["194"],p.prf[ "62"],p.prf["213"],p.prf["232"]],
+			"lneCxlneNxdrgMdmCorAA"    : [U,p.prf["81"],p.prf["100"],p.prf["119"],p.prf["138"],p.prf["157"],p.prf["176"],p.prf[ "13"],p.prf["195"],p.prf[ "63"],p.prf["214"],p.prf["233"]],
+			"lneCxlneNxjdgHghCorAA"    : [U,p.prf["77"],p.prf[ "96"],p.prf["115"],p.prf["134"],p.prf["153"],p.prf["172"],p.prf[  "9"],p.prf["191"],p.prf[ "59"],p.prf["210"],p.prf["229"]],
+			"lneCxlneNxjdgMdmCorAA"    : [U,p.prf["76"],p.prf[ "95"],p.prf["114"],p.prf["133"],p.prf["152"],p.prf["171"],p.prf[  "8"],p.prf["190"],p.prf[ "39"],p.prf["209"],p.prf["228"]],
+			"lneCxlneNxlneBkgHghCorAA" : [U,p.prf["79"],p.prf[ "98"],p.prf["117"],p.prf["136"],p.prf["155"],p.prf["174"],p.prf[ "11"],p.prf["193"],p.prf[ "61"],p.prf["212"],p.prf["231"]],
+			"lneCxlneNxlneBkgMdmCorAA" : [U,p.prf["78"],p.prf[ "97"],p.prf["116"],p.prf["135"],p.prf["154"],p.prf["173"],p.prf[ "10"],p.prf["192"],p.prf[ "60"],p.prf["211"],p.prf["230"]],
+			"lneCxlneNxnteHitHghCorAA" : [U,p.prf["87"],p.prf["106"],p.prf["125"],p.prf["144"],p.prf["163"],p.prf["182"],p.prf[ "19"],p.prf["201"],p.prf[ "68"],p.prf["220"],p.prf["239"]],
+			"lneCxlneNxnteHitLowCorAA" : [U,p.prf["85"],p.prf["104"],p.prf["123"],p.prf["142"],p.prf["161"],p.prf["180"],p.prf[ "17"],p.prf["199"],p.prf[ "67"],p.prf["218"],p.prf["237"]],
+			"lneCxlneNxnteHitMdmCorAA" : [U,p.prf["86"],p.prf["105"],p.prf["124"],p.prf["143"],p.prf["162"],p.prf["181"],p.prf[ "18"],p.prf["200"],p.prf[ "40"],p.prf["219"],p.prf["238"]],
+			"lneCxlneNxnteTklHghCorAA" : [U,p.prf["90"],p.prf["109"],p.prf["128"],p.prf["147"],p.prf["166"],p.prf["185"],p.prf[ "22"],p.prf["204"],p.prf[ "71"],p.prf["223"],p.prf["242"]],
+			"lneCxlneNxnteTklLowCorAA" : [U,p.prf["88"],p.prf["107"],p.prf["126"],p.prf["145"],p.prf["164"],p.prf["183"],p.prf[ "20"],p.prf["202"],p.prf[ "69"],p.prf["221"],p.prf["240"]],
+			"lneCxlneNxnteTklMdmCorAA" : [U,p.prf["89"],p.prf["108"],p.prf["127"],p.prf["146"],p.prf["165"],p.prf["184"],p.prf[ "21"],p.prf["203"],p.prf[ "70"],p.prf["222"],p.prf["241"]],
+			"lneCxlneNxsnpMjrHghCorAA" : [U,p.prf["92"],p.prf["111"],p.prf["130"],p.prf["149"],p.prf["168"],p.prf["187"],p.prf["248"],p.prf["206"],p.prf[ "73"],p.prf["225"],p.prf["244"]],
+			"lneCxlneNxsnpMjrMdmCorAA" : [U,p.prf["91"],p.prf["110"],p.prf["129"],p.prf["148"],p.prf["167"],p.prf["186"],p.prf["247"],p.prf["205"],p.prf[ "72"],p.prf["224"],p.prf["243"]],
+			"lneCxlneNxsnpMnrHghCorAA" : [U,p.prf["94"],p.prf["113"],p.prf["132"],p.prf["151"],p.prf["170"],p.prf["189"],p.prf["259"],p.prf["208"],p.prf[ "75"],p.prf["227"],p.prf["246"]],
+			"lneCxlneNxsnpMnrMdmCorAA" : [U,p.prf["93"],p.prf["112"],p.prf["131"],p.prf["150"],p.prf["169"],p.prf["188"],p.prf["249"],p.prf["207"],p.prf[ "74"],p.prf["226"],p.prf["245"]],
+			"nteAltDltT"               : p.prf["1"],
+			"nteHgtPrt"                : p.prf["5"],
+			"snpMjrHgtPrt"             : p.prf["260"],
+			"snpMnrHgtPrt"             : p.prf["261"],
+			
+			"hotKeyHdlFxn"             : (function(that){return function(i={}){i = π.cc(i);var o = {staF:F};
+				π.p(i,{edgKeyS:U,edgResS:U,edgF:U,edgU:U,staF:U,staU:U,staKeyS:U,staResS:U});
+				if (i.staF === T){
+					switch (i.staKeyS){default:{;}
+						// Stop chart. Assert list view.
+						break;case "Escape|0"     :{that.act.esc();}
+						break;case that.prf["250"]:{that.crtLod();}
+						break;case "":{;};}}
+				;};})(p),
+			
+			// Make a preference (lower priority).
+			"crtSve_fleNmeS"        : "ftb-chart-exported.txt" ,
+			
+			// Maybe eventually make a preference, maybe not.
+			"aspRtoPrgBarN"         :   0.1    ,
+			"aspRtoWvfN"            :   0.1    ,
+			"errStbDltT"            :   0      , //-0.25, // !!! Experimental wrangling of buggy JS audio. Didn't really work well. Keep at 0 or remove.
+			"lwyDltT"               : 999      , //0.3, // JS audio is still just as buggy as its inception
+			"snpDmrMaxN"            :  30      ,
+			"snpDmrMinN"            :   0      ,
+			"velClkDecFxn"  : ((velClkPrfN)=>{
+				var velClkPrfN_FRZ = velClkPrfN;
+				velClkPrfN = π.clamp(velClkPrfN / 1.1,0.25,4);
+				if (velClkPrfN_FRZ > 1 && velClkPrfN < 1){velClkPrfN = 1;} // Special case to ensure snapability to 1.
+				return velClkPrfN;}),
+			"velClkIncFxn"  : ((velClkPrfN)=>{
+				var velClkPrfN_FRZ = velClkPrfN;
+				velClkPrfN = π.clamp(velClkPrfN * 1.1,0.25,4);
+				if (velClkPrfN_FRZ < 1 && velClkPrfN > 1){velClkPrfN = 1;} // Special case to ensure snapability to 1.
+				return velClkPrfN;}),
+			"velClkMaxN"            : 4 ,
+			"velClkMinN"            : 0.25 ,
+			"velScrMaxN"            : Number.POSITIVE_INFINITY,
+			"velScrMinN"            : Number.NEGATIVE_INFINITY,
+			"velScrDecFxn"          : (n=>n/1.05) ,
+			"velScrIncFxn"          : (n=>n*1.05) ,
+			"vlmDecFxn"             : (n=>n-0.1) ,
+			"vlmIncFxn"             : (n=>n+0.1) ,
+			
+			// Not a preference.
+			"vlmMaxN"               : 1,
+			"vlmMinN"               : 0,
+			
+			};
+		//....
+		moonlight.import(moonlight.get("FtB9 Gate 0","main.js").ID,o);
+		
+		// [!] This looks wrong to be in the callback function,
+		//     but apparently, each of these preferences is clocked.
+		var prf = {};
+		prf.cpsF       = F;
+		prf.posJdgPrt  = jjjcl([p,"prf","6"],0,0.1);
+		prf.snpDmrN    = 0;
+		prf.velClkPrfN = 1;
+		prf.velLinN    = jjjcl([p,"prf","2"],0,1.1);
+		prf.vlmPrt     = jjjcl([p,"prf","3"],0,1  );
+		moonlight.import(moonlight.get("Game Frame Preference Gate","main.js").ID,{
+			"cpsF"       : prf.cpsF       ,
+			"posJdgPrt"  : prf.posJdgPrt  ,
+			"snpDmrN"    : prf.snpDmrN    ,
+			"velClkPrfN" : prf.velClkPrfN ,
+			"velLinN"    : prf.velLinN    ,
+			"vlmPrt"     : prf.vlmPrt     ,});
+		
+		//var o = sto.sve({sltS:"prf",datM:p.prf});
+		
+		;};
+	
+	p.prfAsr();
+	window.addEventListener("storage",()=>{
+		//llc(0,"sto change");
+		p.prfAsr();});
+	
+	//------------------------------------------------------------------------------------------------------------------------
+	
+	// Assert default sheet.
+	p.shtAsr("0",F);
+	p.shtAsr("1",T);
+	p.shtAsr("2",F);
+	
+	// Sigma.
+	await σ.get({urlS:p.urlIdxS   ,typS:"index"     });
+	await σ.get({urlS:p.urlSdeIdxS,typS:"side-index"});
+	await σ.renormalize();
+	π.intervalCall3(1000000,(function(that){return function(){p.renderTable();};})(p));
+	
+	// DEBUG fps
+	//π.intervalCall3(1000000,(function(){return function(){uniani.dump();};})());
+	
+	p.mseShwE = {
+		staF   : T,
+		cssElm : µ.maCSS2(document.head,"css-mouse-show",µ.cssCompile({[":root>body>.sheet-c>.sheet[data-slot='0']"]:"cursor:auto;"})),};
+	document.addEventListener("mousemove",(evt)=>{
+		if (p.mseShwE.staF === F){
+			p.mseShwE.staF = T;
+			p.mseShwE.cssElm.textContent = ":root>body>.sheet-c>.sheet[data-slot='0']{cursor:auto;}";}
+		π.delay({
+			tag:"mouse-show",
+			fxn:()=>{
+				p.mseShwE.staF = F;
+				p.mseShwE.cssElm.textContent = ":root>body>.sheet-c>.sheet[data-slot='0']{cursor:none;}";},
+			t:0.5});},{capture:T,passive:T});
+	
+});
+</script>
+<style>
+html {width:100%;height:100%;}
+body {width:100%;height:100%;margin:0px;}
+</style>
+</head>
+<body></body>
+</html>
